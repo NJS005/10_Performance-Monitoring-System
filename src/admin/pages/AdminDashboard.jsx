@@ -28,7 +28,7 @@ const AdminDashboard = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
 
-  // Handle add user
+  
   const handleAddUser = async (userData) => {
     try {
       await addUser(userData);
@@ -49,7 +49,7 @@ const AdminDashboard = () => {
     }
   };
 
-  // Handle delete user
+  
   const handleDeleteUser = async () => {
     if (userToDelete) {
       try {
@@ -62,7 +62,7 @@ const AdminDashboard = () => {
     }
   };
 
-  // Handle role assignment
+  
   const handleAssignRole = async (email, role) => {
     try {
       await assignRole(email, role);
@@ -72,30 +72,30 @@ const AdminDashboard = () => {
     }
   };
 
-  // Open edit form
+  
   const openEditForm = (user) => {
     setEditingUser(user);
     setShowForm(true);
   };
 
-  // Open add form
+  
   const openAddForm = () => {
     setEditingUser(null);
     setShowForm(true);
   };
 
-  // Close form
+  
   const closeForm = () => {
     setShowForm(false);
     setEditingUser(null);
   };
 
-  // Open role assignment modal
+  
   const openRoleModal = () => {
     setShowRoleModal(true);
   };
 
-  // Open delete confirmation
+  
   const openDeleteModal = (user) => {
     setUserToDelete(user);
     setShowDeleteModal(true);
