@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-
+import icon from '../assets/edit.png'; 
 
 export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) => {
- 
   const calculateTotalCredits = () => {
     const allCourses = [...courses.core, ...courses.elective];
     return allCourses.reduce((sum, course) => sum + course.credits, 0);
   };
 
   const [totalCreditsCompleted, setTotalCreditsCompleted] = useState(calculateTotalCredits());
+  const [displayedCGPA, setDisplayedCGPA] = useState(currentCGPA);
   const [upcomingCredits, setUpcomingCredits] = useState(20);
   const [targetCGPA, setTargetCGPA] = useState(9.0);
   const [result, setResult] = useState(null);
@@ -16,7 +16,7 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
  
   const calculateRequiredSGPA = () => {
    
-    const currentTotalPoints = currentCGPA * totalCreditsCompleted;
+    const currentTotalPoints = displayedCGPA * totalCreditsCompleted;
     
 
     const totalCreditsAfter = totalCreditsCompleted + upcomingCredits;
@@ -48,7 +48,7 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
     if (currentCGPA > 0 && totalCreditsCompleted > 0 && upcomingCredits > 0 && targetCGPA > 0) {
       handleCalculate();
     }
-  }, [currentCGPA, totalCreditsCompleted, upcomingCredits, targetCGPA]);
+  }, [displayedCGPA, totalCreditsCompleted, upcomingCredits, targetCGPA]);
 
   
   const getGradeRecommendation = (requiredSGPA) => {
@@ -75,12 +75,22 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
         <div className="space-y-6">
         
           <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border-2 border-indigo-200">
+            <div className="flex items-center justify-between mb-4">
+              
             <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2 block">
               Current CGPA
-            </label>
+            </label>    
+            </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-indigo-700">{currentCGPA}</span>
-              <span className="text-lg text-gray-500">/ 10.00</span>
+              <input
+                type="number"
+                value={displayedCGPA}
+                step="0.01"
+                max="10"
+                onChange={(e) => setDisplayedCGPA(parseFloat(e.target.value) || 0)}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors duration-200 text-lg font-semibold"
+                min="0"
+              />
             </div>
           </div>
 

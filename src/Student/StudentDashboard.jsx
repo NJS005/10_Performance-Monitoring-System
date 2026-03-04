@@ -26,15 +26,15 @@ const StudentDashboard = () => {
     // Academic data
     courses: {
       core: [
-        { id: 1, code: 'CS301', name: 'Data Structures',   credits: 4, grade: 'A', semester: 3 },
-        { id: 2, code: 'CS302', name: 'Algorithms',        credits: 4, grade: 'S', semester: 3 },
-        { id: 3, code: 'CS303', name: 'Database Systems',  credits: 3, grade: 'A', semester: 4 },
-        { id: 4, code: 'CS304', name: 'Operating Systems', credits: 4, grade: 'B', semester: 4 },
-        { id: 5, code: 'CS305', name: 'Computer Networks', credits: 3, grade: 'A', semester: 5 },
+        // { id: 1, code: 'CS301', name: 'Data Structures',   credits: 4, grade: 'A', semester: 3 },
+        // { id: 2, code: 'CS302', name: 'Algorithms',        credits: 4, grade: 'S', semester: 3 },
+        // { id: 3, code: 'CS303', name: 'Database Systems',  credits: 3, grade: 'A', semester: 4 },
+        // { id: 4, code: 'CS304', name: 'Operating Systems', credits: 4, grade: 'B', semester: 4 },
+        // { id: 5, code: 'CS305', name: 'Computer Networks', credits: 3, grade: 'A', semester: 5 },
       ],
       elective: [
-        { id: 6, code: 'CS401', name: 'Machine Learning', credits: 3, grade: 'S', semester: 5 },
-        { id: 7, code: 'CS402', name: 'Cloud Computing',  credits: 3, grade: 'A', semester: 5 },
+        // { id: 6, code: 'CS401', name: 'Machine Learning', credits: 3, grade: 'S', semester: 5 },
+        // { id: 7, code: 'CS402', name: 'Cloud Computing',  credits: 3, grade: 'A', semester: 5 },
       ],
     },
   });
