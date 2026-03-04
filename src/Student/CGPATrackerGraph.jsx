@@ -1,18 +1,9 @@
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-/**
- * CGPA & SGPA Tracker Graph Component
- * 
- * Displays a line chart showing:
- * - SGPA (Semester GPA) per semester
- * - CGPA (Cumulative GPA) progression
- * 
- * Uses Recharts library for visualization
- * Updates dynamically when grades change
- */
+
 export const CGPATrackerGraph = ({ gpaData, currentCGPA }) => {
-  // Custom tooltip for the chart
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (

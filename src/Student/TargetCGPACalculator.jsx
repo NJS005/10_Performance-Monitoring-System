@@ -1,18 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
-/**
- * Target CGPA Calculator Component
- * 
- * Allows students to plan their academic performance by calculating
- * the required SGPA for the next semester to achieve their target CGPA
- * 
- * Formula: CGPA = Σ(Credit × Grade Point) / Σ(Credits)
- * 
- * Grade Mapping:
- * S = 10, A = 9, B = 8, C = 7, D = 6, E = 5
- */
+
 export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) => {
-  // Calculate total credits completed
+ 
   const calculateTotalCredits = () => {
     const allCourses = [...courses.core, ...courses.elective];
     return allCourses.reduce((sum, course) => sum + course.credits, 0);
@@ -23,21 +13,21 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
   const [targetCGPA, setTargetCGPA] = useState(9.0);
   const [result, setResult] = useState(null);
 
-  // Calculate required SGPA
+ 
   const calculateRequiredSGPA = () => {
-    // Current total grade points
+   
     const currentTotalPoints = currentCGPA * totalCreditsCompleted;
     
-    // Total credits after next semester
+
     const totalCreditsAfter = totalCreditsCompleted + upcomingCredits;
     
-    // Required total points for target CGPA
+   
     const requiredTotalPoints = targetCGPA * totalCreditsAfter;
     
-    // Points needed from upcoming semester
+   
     const pointsNeeded = requiredTotalPoints - currentTotalPoints;
     
-    // Required SGPA
+    
     const requiredSGPA = upcomingCredits > 0 ? pointsNeeded / upcomingCredits : 0;
 
     return {
@@ -53,14 +43,14 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
     setResult(calculationResult);
   };
 
-  // Auto-calculate when inputs change
+  
   useEffect(() => {
     if (currentCGPA > 0 && totalCreditsCompleted > 0 && upcomingCredits > 0 && targetCGPA > 0) {
       handleCalculate();
     }
   }, [currentCGPA, totalCreditsCompleted, upcomingCredits, targetCGPA]);
 
-  // Grade recommendation based on required SGPA
+  
   const getGradeRecommendation = (requiredSGPA) => {
     const sgpa = parseFloat(requiredSGPA);
     if (sgpa >= 9.5) return { grade: 'S', color: 'green', message: 'You need mostly S grades' };
@@ -73,16 +63,17 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl">
-      {/* Section Header */}
+   
+   
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-gray-900 mb-1">Target CGPA Calculator</h3>
         <p className="text-gray-500">Plan your academic performance for upcoming semesters</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left: Input Section */}
+     
         <div className="space-y-6">
-          {/* Current CGPA - Read Only */}
+        
           <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border-2 border-indigo-200">
             <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2 block">
               Current CGPA
@@ -93,7 +84,7 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
             </div>
           </div>
 
-          {/* Total Credits Completed */}
+         
           <div>
             <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2 block">
               Total Credits Completed
@@ -108,7 +99,7 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
             <p className="text-xs text-gray-500 mt-1">Credits earned from all completed semesters</p>
           </div>
 
-          {/* Upcoming Semester Credits */}
+         
           <div>
             <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2 block">
               Credits for Upcoming Semester
@@ -123,7 +114,7 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
             <p className="text-xs text-gray-500 mt-1">Total credits you plan to take next semester</p>
           </div>
 
-          {/* Target CGPA */}
+         
           <div>
             <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2 block">
               Target CGPA
@@ -141,13 +132,13 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
           </div>
         </div>
 
-        {/* Right: Result Section */}
+      
         <div className="flex flex-col justify-center">
           {result ? (
             <div className="space-y-6">
               {result.isAchievable ? (
                 <>
-                  {/* Required SGPA Display */}
+               
                   <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-8 border-2 border-green-300 shadow-lg">
                     <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3 text-center">
                       Required SGPA for Next Semester
@@ -158,7 +149,7 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
                     </div>
                   </div>
 
-                  {/* Grade Recommendation */}
+               
                   {(() => {
                     const recommendation = getGradeRecommendation(result.requiredSGPA);
                     const colorClasses = {
@@ -187,7 +178,7 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
                     );
                   })()}
 
-                  {/* Additional Info */}
+            
                   <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
@@ -202,7 +193,7 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
                   </div>
                 </>
               ) : (
-                /* Not Achievable Message */
+             
                 <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-2xl p-8 border-2 border-red-300">
                   <div className="text-center">
                     <svg className="w-20 h-20 mx-auto mb-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -233,7 +224,7 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
         </div>
       </div>
 
-      {/* Formula Reference */}
+    
       <div className="mt-8 pt-6 border-t border-gray-200">
         <details className="group">
           <summary className="cursor-pointer text-sm font-semibold text-gray-700 hover:text-indigo-700 transition-colors duration-200 flex items-center gap-2">

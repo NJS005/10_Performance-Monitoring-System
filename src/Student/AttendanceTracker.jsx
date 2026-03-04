@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-/** * Attendance Tracker Component * * Implements timetable-based attendance tracking with two batch options: * - Morning Batch (Institute Slots 1) * - Evening Batch (Institute Slots 2) * * Features: * - Visual timetable layout with proportional slot sizing * - Editable course names for each slot (edit mode only) * - Enable/disable courses (edit mode only) * - Custom attendance percentage requirements per course (edit mode only) * - Present/Absent marking * - Attendance percentage calculation * - Warning/danger states for attendance shortage */
 
-// Time slot definitions with durations in hours
 const TIME_SLOTS_MORNING = [
   { time: '08:00-09:00', duration: 1 },
   { time: '09:00-10:00', duration: 1 },
@@ -27,7 +25,7 @@ const TIME_SLOTS_EVENING = [
 
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
 
-// Simplified timetable structure for Morning Batch
+
 const DEFAULT_MORNING_TIMETABLE = {
   MON: ['F', 'A1', 'B1', 'C1', 'D1', 'BREAK', 'P1', 'G'],
   TUE: ['H', 'B1', 'C1', 'D1', 'E1', 'BREAK', 'Q1', 'F'],
@@ -36,7 +34,7 @@ const DEFAULT_MORNING_TIMETABLE = {
   FRI: ['H', 'E1', 'A1', 'B1', 'C1', 'BREAK', 'T1', 'F']
 };
 
-// Simplified timetable structure for Evening Batch
+
 const DEFAULT_EVENING_TIMETABLE = {
   MON: ['F', 'P2', 'BREAK', 'D2', 'A2', 'B2', 'C2', 'G'],
   TUE: ['H', 'Q2', 'BREAK', 'E2', 'B2', 'C2', 'D2', 'F'],
@@ -45,12 +43,12 @@ const DEFAULT_EVENING_TIMETABLE = {
   FRI: ['H', 'T2', 'BREAK', 'C2', 'E2', 'A2', 'B2', 'F']
 };
 
-// Helper function to get current week's dates
+
 const getWeekDates = () => {
   const today = new Date();
   const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
   
-  // Calculate offset to get to Monday
+  
   const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
   
   const dates = [];
@@ -63,7 +61,7 @@ const getWeekDates = () => {
   return dates;
 };
 
-// Format date as "DD/MM"
+
 const formatDate = (date) => {
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -81,12 +79,12 @@ export const AttendanceTracker = ({ courses }) => {
 
   const TIME_SLOTS = selectedBatch === 'morning' ? TIME_SLOTS_MORNING : TIME_SLOTS_EVENING;
 
-  // Initialize week dates
+  
   useEffect(() => {
     setWeekDates(getWeekDates());
   }, []);
 
-  // Initialize timetable and attendance data
+  
   useEffect(() => {
     const defaultTimetable = selectedBatch === 'morning' ? DEFAULT_MORNING_TIMETABLE : DEFAULT_EVENING_TIMETABLE;
     const initialTimetable = {};

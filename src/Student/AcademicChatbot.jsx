@@ -1,16 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Sparkles, TrendingUp, BookOpen, Target, Lightbulb } from 'lucide-react';
 
-/**
- * AI Academic Chatbot Component - Frontend Only (No API)
- * 
- * Implements: FR-BOT-01, FR-BOT-02
- * - Analyzes academic history to identify weaknesses
- * - Suggests electives based on past performance
- * - Provides constructive criticism and guidance
- * 
- * Note: Uses intelligent rule-based responses, no external API calls
- */
 const AcademicChatbot = ({ courses, studentData, currentCGPA, getGradePoint }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -18,7 +8,7 @@ const AcademicChatbot = ({ courses, studentData, currentCGPA, getGradePoint }) =
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Scroll to bottom of messages
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -27,7 +17,7 @@ const AcademicChatbot = ({ courses, studentData, currentCGPA, getGradePoint }) =
     scrollToBottom();
   }, [messages]);
 
-  // Initialize chatbot with welcome message
+ 
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       setMessages([{
@@ -48,23 +38,21 @@ What would you like to know?`,
     }
   }, [isOpen, messages.length, studentData.name]);
 
-  // Analyze student's academic performance
   const analyzePerformance = () => {
     const allCourses = [...courses.core, ...courses.elective];
     
-    // Performance metrics
+  
     const performanceByGrade = allCourses.reduce((acc, course) => {
       acc[course.grade] = (acc[course.grade] || 0) + 1;
       return acc;
     }, {});
 
-    // Weak subjects (grade < B)
     const weakSubjects = allCourses.filter(c => getGradePoint(c.grade) < 8);
 
-    // Strong subjects (grade >= A)
+   
     const strongSubjects = allCourses.filter(c => getGradePoint(c.grade) >= 9);
 
-    // Calculate semester-wise performance
+
     const semesterPerformance = {};
     allCourses.forEach(course => {
       if (!semesterPerformance[course.semester]) {
@@ -79,7 +67,7 @@ What would you like to know?`,
       data.sgpa = (data.totalPoints / data.totalCredits).toFixed(2);
     });
 
-    // Calculate trend
+    
     const semesters = Object.keys(semesterPerformance).sort((a, b) => a - b);
     let trend = 'stable';
     if (semesters.length >= 2) {
@@ -99,12 +87,11 @@ What would you like to know?`,
     };
   };
 
-  // Generate intelligent response based on question
+  
   const generateResponse = (question) => {
     const lowerQuestion = question.toLowerCase();
     const analysis = analyzePerformance();
 
-    // Elective recommendations
     if (lowerQuestion.includes('elective') || lowerQuestion.includes('recommend') || lowerQuestion.includes('suggest course')) {
       const strongSubjects = analysis.strongSubjects.map(c => c.name);
       const hasMachineLearning = analysis.allCourses.some(c => c.name.toLowerCase().includes('machine learning'));
@@ -133,7 +120,7 @@ What would you like to know?`,
       return recommendations;
     }
 
-    // Performance analysis
+   
     if (lowerQuestion.includes('perform') || lowerQuestion.includes('doing') || lowerQuestion.includes('analysis') || lowerQuestion.includes('how am i')) {
       let response = `📊 **Academic Performance Analysis**\n\n`;
       response += `**Current CGPA:** ${currentCGPA}/10.00 - `;
@@ -172,7 +159,7 @@ What would you like to know?`,
       return response;
     }
 
-    // Improvement strategies
+   
     if (lowerQuestion.includes('improve') || lowerQuestion.includes('better') || lowerQuestion.includes('study') || lowerQuestion.includes('weak')) {
       let response = '';
       
@@ -191,7 +178,7 @@ What would you like to know?`,
         analysis.weakSubjects.forEach((course, index) => {
           response += `**${index + 1}. ${course.name}** (Grade ${course.grade})\n`;
           
-          // Subject-specific advice
+ 
           if (course.name.toLowerCase().includes('operating system') || course.name.toLowerCase().includes('os')) {
             response += `• Review: Process scheduling, memory management, file systems\n`;
             response += `• Practice: Coding system calls and process synchronization\n`;
@@ -219,7 +206,7 @@ What would you like to know?`,
       return response;
     }
 
-    // CGPA/Grade specific questions
+
     if (lowerQuestion.includes('cgpa') || lowerQuestion.includes('gpa') || lowerQuestion.includes('grade point')) {
       let response = `📊 **CGPA Analysis**\n\n`;
       response += `**Current CGPA:** ${currentCGPA}/10.00\n`;
@@ -251,7 +238,7 @@ What would you like to know?`,
       return response;
     }
 
-    // Semester/Progress questions
+   
     if (lowerQuestion.includes('semester') || lowerQuestion.includes('progress') || lowerQuestion.includes('trend')) {
       let response = `📈 **Semester-wise Progress Analysis**\n\n`;
       
@@ -285,7 +272,7 @@ What would you like to know?`,
       return response;
     }
 
-    // Career/Future questions
+   
     if (lowerQuestion.includes('career') || lowerQuestion.includes('job') || lowerQuestion.includes('future') || lowerQuestion.includes('placement')) {
       const strongAreas = analysis.strongSubjects.map(c => c.name);
       let response = `🚀 **Career Path Recommendations**\n\n`;
@@ -325,7 +312,7 @@ What would you like to know?`,
       return response;
     }
 
-    // Target CGPA questions
+
     if (lowerQuestion.includes('target') || lowerQuestion.includes('reach') || lowerQuestion.includes('achieve 9') || lowerQuestion.includes('get to')) {
       const targetCGPA = lowerQuestion.includes('9.5') ? 9.5 : lowerQuestion.includes('9') ? 9.0 : 8.5;
       const currentNum = parseFloat(currentCGPA);
@@ -366,11 +353,11 @@ What would you like to know?`,
       return response;
     }
 
-    // Default helpful response
+
     return `I can help you with many things! Try asking:\n\n💡 **"What electives should I take?"**\n→ Get personalized course recommendations\n\n📊 **"How am I performing?"**\n→ Detailed performance analysis\n\n📈 **"How can I improve my grades?"**\n→ Targeted improvement strategies\n\n🎯 **"How can I reach 9.0 CGPA?"**\n→ Actionable plan to hit your goals\n\n🚀 **"What career paths fit my strengths?"**\n→ Career guidance based on performance\n\nWhat would you like to explore?`;
   };
 
-  // Handle sending message
+  
   const handleSendMessage = () => {
     if (!inputMessage.trim() || isTyping) return;
 
@@ -386,7 +373,7 @@ What would you like to know?`,
     setInputMessage('');
     setIsTyping(true);
 
-    // Simulate typing delay for more realistic chat experience
+    
     setTimeout(() => {
       const botResponse = generateResponse(currentQuestion);
       
@@ -402,7 +389,7 @@ What would you like to know?`,
     }, 1000 + Math.random() * 1000); // Random delay 1-2 seconds
   };
 
-  // Quick action buttons
+ 
   const quickActions = [
     { 
       label: 'Suggest Electives', 

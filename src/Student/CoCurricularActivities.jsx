@@ -1,16 +1,6 @@
 import React, { useState } from 'react';
 
-/**
- * Co-Curricular Activities Component
- * 
- * Implements FR-STU-04: Allow students to enter description of co-curricular activities
- * 
- * Features:
- * - Add/Edit/Delete activities
- * - Each activity has: Title, Description, Certificate (optional), Activity Type
- * - Activity types: Club, Competition, Quiz, Workshop, Seminar, Sports, Cultural, Others
- * - Certificate upload support
- */
+
 export const CoCurricularActivities = () => {
   const [activities, setActivities] = useState([
     {

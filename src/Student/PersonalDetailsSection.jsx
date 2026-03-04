@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 
-/**
- * Personal Details Section Component
- * 
- * Implements FR-STU-01: Allow students to view and update personal profiles
- * Full-width section displaying and allowing editing of student information
- */
+
+
 export const PersonalDetailsSection = ({ studentData, setStudentData, verificationStatus }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(studentData);

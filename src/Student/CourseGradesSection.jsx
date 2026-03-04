@@ -1,22 +1,6 @@
 import React, { useState } from 'react';
 
-/**
- * Course Grades Overview Component
- * 
- * Implements FR-STU-02: Enter academic details (courses, grades, semester performance)
- * Implements FR-STU-03: Update academic data
- * Implements FR-STU-05: Submit academic data for verification
- * 
- * Displays all courses grouped by Core and Elective categories
- * Allows editing grades before submission
- * Allows PDF grade card upload
- * Supports semester filtering via showSemester prop
- * 
- * @param {Object} courses - Course data with core and elective categories
- * @param {Function} setCourses - Function to update courses
- * @param {Function} getGradePoint - Function to convert grade to points
- * @param {string|number} showSemester - 'all' to show all semesters with tabs, or specific semester number
- */
+
 export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSemester = 'all' }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editCourses, setEditCourses] = useState(courses);
@@ -24,7 +8,7 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
   const [pdfFileName, setPdfFileName] = useState('');
   const [activeSemester, setActiveSemester] = useState(null);
 
-  // Get all unique semesters from courses
+
   const getAllSemesters = () => {
     const allCourses = [...courses.core, ...courses.elective];
     const semesters = [...new Set(allCourses.map(course => course.semester))];
@@ -33,7 +17,7 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
 
   const allSemesters = getAllSemesters();
   
-  // Set initial active semester
+ 
   React.useEffect(() => {
     if (showSemester === 'all' && allSemesters.length > 0 && !activeSemester) {
       setActiveSemester(allSemesters[allSemesters.length - 1]); // Default to latest semester
@@ -42,7 +26,7 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
     }
   }, [showSemester, allSemesters, activeSemester]);
 
-  // Filter courses by semester
+
   const filterCoursesBySemester = (coursesData, semester) => {
     if (showSemester === 'all' && semester) {
       return {
@@ -73,7 +57,7 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
     setIsEditing(false);
   };
 
-  // Update grade for a specific course
+
   const handleGradeChange = (category, courseId, newGrade) => {
     setEditCourses(prev => ({
       ...prev,
@@ -83,7 +67,7 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
     }));
   };
 
-  // Handle PDF upload
+ 
   const handlePDFUpload = (event) => {
     const file = event.target.files[0];
     if (file && file.type === 'application/pdf') {
@@ -94,13 +78,13 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
     }
   };
 
-  // Remove uploaded PDF
+ 
   const removePDF = () => {
     setUploadedPDF(null);
     setPdfFileName('');
   };
 
-  // Calculate category-wise statistics
+ 
   const calculateStats = (categoryCourses) => {
     let totalCredits = 0;
     let totalPoints = 0;
@@ -114,17 +98,17 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
     return { totalCredits, gpa };
   };
 
-  // Get filtered courses for display
+ 
   const displayCourses = isEditing ? editCourses : courses;
   const filteredCourses = filterCoursesBySemester(displayCourses, activeSemester);
   
   const coreStats = calculateStats(filteredCourses.core);
   const electiveStats = calculateStats(filteredCourses.elective);
 
-  // Grade options
+ 
   const gradeOptions = ['S', 'A', 'B', 'C', 'D', 'E'];
 
-  // Grade color mapping
+
   const gradeColors = {
     'S': 'bg-green-100 text-green-800 border-green-300',
     'A': 'bg-blue-100 text-blue-800 border-blue-300',
@@ -138,12 +122,12 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
     const displayList = filteredCourses[categoryKey];
 
     if (displayList.length === 0) {
-      return null; // Don't render empty categories
+      return null; 
     }
 
     return (
       <div className="mb-6 last:mb-0">
-        {/* Category Header */}
+   
         <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-gray-200">
           <h4 className="text-xl font-bold text-gray-900">{categoryName}</h4>
           <div className="flex gap-4 text-sm">
