@@ -1,0 +1,1384 @@
+import React, { useState, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Upload, Book, Target, Calendar, MessageCircle, Bell, User, ChevronRight, TrendingUp, AlertCircle, CheckCircle, Clock, Edit3, X, Menu, Save, Plus, Trash2 } from 'lucide-react';
+
+// Mock Data
+const INITIAL_USER = {
+  name: '',
+  studentId: '',
+  department: '',
+  semester: '',
+  email: 'student@institute.edu.in',
+  profileComplete: false
+};
+
+function Student() {
+  const [user, setUser] = useState(INITIAL_USER);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [showProfileModal, setShowProfileModal] = useState(!user.profileComplete);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  useEffect(() => {
+    const profileComplete = localStorage.getItem('profileComplete');
+    if (profileComplete === 'true') {
+      const savedUser = JSON.parse(localStorage.getItem('user'));
+      setUser(savedUser);
+      setShowProfileModal(false);
+    }
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#2d3561] via-[#3d4573] to-[#4d5585]">
+      {showProfileModal && (
+        <ProfileCompletionModal 
+          user={user} 
+          setUser={setUser} 
+          setShowProfileModal={setShowProfileModal} 
+        />
+      )}
+      
+      <Header 
+        user={user} 
+        showNotifications={showNotifications}
+        setShowNotifications={setShowNotifications}
+        mobileMenuOpen={mobileMenuOpen}
+        setMobileMenuOpen={setMobileMenuOpen}
+      />
+      
+      <div className="flex h-[calc(100vh-72px)]">
+        <Sidebar 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab}
+          mobileMenuOpen={mobileMenuOpen}
+          setMobileMenuOpen={setMobileMenuOpen}
+        />
+        
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-8">
+          {activeTab === 'overview' && <Overview user={user} />}
+          {activeTab === 'grades' && <GradeManagement />}
+          {activeTab === 'attendance' && <AttendanceTracker />}
+          {activeTab === 'calculator' && <TargetCalculator />}
+          {activeTab === 'chatbot' && <AcademicChatbot />}
+        </main>
+      </div>
+      
+      <ChatbotWidget />
+    </div>
+  );
+}
+
+// Profile Completion Modal
+function ProfileCompletionModal({ user, setUser, setShowProfileModal }) {
+  const [formData, setFormData] = useState({
+    name: '',
+    studentId: '',
+    department: '',
+    semester: ''
+  });
+  const [errors, setErrors] = useState({});
+
+  const departments = [
+    'Computer Science',
+    'Information Technology',
+    'Electronics & Communication',
+    'Mechanical Engineering',
+    'Civil Engineering',
+    'Electrical Engineering'
+  ];
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.name || formData.name.length < 3) {
+      newErrors.name = 'Enter valid name (min 3 characters)';
+    }
+    
+    if (!formData.studentId.match(/^\d{4}[A-Z]{2,4}\d{3,4}$/)) {
+      newErrors.studentId = 'Invalid ID format (e.g., 2021CS001)';
+    }
+    
+    if (!formData.department) {
+      newErrors.department = 'Please select your department';
+    }
+    
+    if (!formData.semester || formData.semester < 1 || formData.semester > 8) {
+      newErrors.semester = 'Select semester between 1 and 8';
+    }
+    
+    return newErrors;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const newErrors = validateForm();
+    
+    if (Object.keys(newErrors).length === 0) {
+      const updatedUser = { ...user, ...formData, profileComplete: true };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      localStorage.setItem('profileComplete', 'true');
+      setShowProfileModal(false);
+    } else {
+      setErrors(newErrors);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6 animate-fadeIn">
+      <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-scaleIn">
+        <div className="p-8 border-b border-gray-200">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Complete Your Profile</h2>
+          <p className="text-gray-600">Required before accessing dashboard</p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Institute Email (Read-Only)</label>
+            <input 
+              type="email" 
+              value={user.email} 
+              disabled 
+              className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-xl text-gray-500 cursor-not-allowed"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
+            <input 
+              type="text" 
+              placeholder="As per official records"
+              value={formData.name}
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              className={`w-full px-4 py-3 border rounded-xl transition-all ${
+                errors.name ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-[#5b6ba8] focus:ring-4 focus:ring-[#5b6ba8]/20'
+              } outline-none`}
+            />
+            {errors.name && <span className="text-red-600 text-sm mt-1 block">{errors.name}</span>}
+          </div>
+          
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Student ID *</label>
+            <input 
+              type="text" 
+              placeholder="Format: 2021CS001"
+              value={formData.studentId}
+              onChange={(e) => setFormData({...formData, studentId: e.target.value.toUpperCase()})}
+              className={`w-full px-4 py-3 border rounded-xl transition-all ${
+                errors.studentId ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-[#5b6ba8] focus:ring-4 focus:ring-[#5b6ba8]/20'
+              } outline-none`}
+            />
+            {errors.studentId && <span className="text-red-600 text-sm mt-1 block">{errors.studentId}</span>}
+          </div>
+          
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Department *</label>
+            <select 
+              value={formData.department}
+              onChange={(e) => setFormData({...formData, department: e.target.value})}
+              className={`w-full px-4 py-3 border rounded-xl transition-all ${
+                errors.department ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-[#5b6ba8] focus:ring-4 focus:ring-[#5b6ba8]/20'
+              } outline-none`}
+            >
+              <option value="">Select Department</option>
+              {departments.map(dept => (
+                <option key={dept} value={dept}>{dept}</option>
+              ))}
+            </select>
+            {errors.department && <span className="text-red-600 text-sm mt-1 block">{errors.department}</span>}
+          </div>
+          
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Current Semester *</label>
+            <select 
+              value={formData.semester}
+              onChange={(e) => setFormData({...formData, semester: e.target.value})}
+              className={`w-full px-4 py-3 border rounded-xl transition-all ${
+                errors.semester ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-[#5b6ba8] focus:ring-4 focus:ring-[#5b6ba8]/20'
+              } outline-none`}
+            >
+              <option value="">Select Semester</option>
+              {[1,2,3,4,5,6,7,8].map(sem => (
+                <option key={sem} value={sem}>Semester {sem}</option>
+              ))}
+            </select>
+            {errors.semester && <span className="text-red-600 text-sm mt-1 block">{errors.semester}</span>}
+          </div>
+          
+          <div className="pt-6 border-t border-gray-200">
+            <button 
+              type="submit" 
+              className="w-full bg-[#5b6ba8] hover:bg-[#4d5a8f] text-white font-semibold py-4 rounded-xl transition-all transform hover:-translate-y-0.5 hover:shadow-lg"
+            >
+              Complete Profile
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// Header Component
+function Header({ user, showNotifications, setShowNotifications, mobileMenuOpen, setMobileMenuOpen }) {
+  const notifications = [
+    { id: 1, type: 'approved', message: 'Sem 5 grade card approved', time: '2 hours ago' },
+    { id: 2, type: 'rejected', message: 'Sem 4 grade card rejected', detail: 'SGPA mismatch', time: '1 day ago' },
+    { id: 3, type: 'warning', message: 'Attendance below 75% in CS601', time: '3 days ago' }
+  ];
+
+  return (
+    <header className="bg-white border-b border-gray-200 px-8 py-4 sticky top-0 z-40 shadow-sm">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          <button 
+            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            <Menu size={24} className="text-gray-700" />
+          </button>
+          <div className="flex items-center gap-2">
+            <Book size={32} className="text-[#5b6ba8]" />
+            <span className="text-2xl font-bold text-[#5b6ba8]">AMS</span>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-6">
+          <button 
+            className="relative p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all hover:-translate-y-0.5"
+            onClick={() => setShowNotifications(!showNotifications)}
+          >
+            <Bell size={20} className="text-gray-700" />
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full min-w-[18px] text-center">
+              3
+            </span>
+          </button>
+          
+          {showNotifications && (
+            <div className="absolute top-20 right-8 bg-white rounded-2xl shadow-2xl w-96 max-h-[480px] overflow-hidden animate-slideDown">
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold">Notifications</h3>
+              </div>
+              <div className="max-h-[400px] overflow-y-auto">
+                {notifications.map(notif => (
+                  <div 
+                    key={notif.id} 
+                    className="flex gap-4 p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      notif.type === 'approved' ? 'bg-green-100 text-green-700' :
+                      notif.type === 'rejected' ? 'bg-red-100 text-red-700' :
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {notif.type === 'approved' && <CheckCircle size={16} />}
+                      {notif.type === 'rejected' && <X size={16} />}
+                      {notif.type === 'warning' && <AlertCircle size={16} />}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 mb-1">{notif.message}</p>
+                      {notif.detail && <span className="text-xs text-gray-600 block mb-1">{notif.detail}</span>}
+                      <span className="text-xs text-gray-400">{notif.time}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all cursor-pointer">
+            <User size={20} className="text-gray-700" />
+            <span className="font-medium text-sm text-gray-900 hidden sm:block">{user.name || 'Student'}</span>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// Sidebar Component
+function Sidebar({ activeTab, setActiveTab, mobileMenuOpen, setMobileMenuOpen }) {
+  const menuItems = [
+    { id: 'overview', label: 'Dashboard', icon: <TrendingUp size={20} /> },
+    { id: 'grades', label: 'Grade Cards', icon: <Upload size={20} /> },
+    { id: 'attendance', label: 'Attendance', icon: <Calendar size={20} /> },
+    { id: 'calculator', label: 'CGPA Calculator', icon: <Target size={20} /> },
+    { id: 'chatbot', label: 'Academic Guide', icon: <MessageCircle size={20} /> }
+  ];
+
+  const handleTabClick = (id) => {
+    setActiveTab(id);
+    setMobileMenuOpen(false);
+  };
+
+  return (
+    <aside className={`w-64 bg-white border-r border-gray-200 p-6 transition-transform duration-300 lg:translate-x-0 ${
+      mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+    } fixed lg:relative h-full z-30`}>
+      <nav className="space-y-1">
+        {menuItems.map(item => (
+          <button
+            key={item.id}
+            className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl font-medium text-sm transition-all ${
+              activeTab === item.id 
+                ? 'bg-[#5b6ba8]/10 text-[#5b6ba8] font-semibold' 
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+            onClick={() => handleTabClick(item.id)}
+          >
+            <span className={activeTab === item.id ? 'text-[#5b6ba8]' : 'text-gray-500'}>{item.icon}</span>
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </nav>
+    </aside>
+  );
+}
+
+// Overview Component
+function Overview({ user }) {
+  const cgpaData = [
+    { semester: 'S1', cgpa: 7.8 },
+    { semester: 'S2', cgpa: 8.2 },
+    { semester: 'S3', cgpa: 8.5 },
+    { semester: 'S4', cgpa: 8.1 },
+    { semester: 'S5', cgpa: 8.6 }
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Welcome back, {user.name || 'Student'}!</h1>
+          <p className="text-gray-600">Semester {user.semester || 6} • {user.department}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all hover:-translate-y-1 flex gap-4">
+          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#5b6ba8] to-[#4d5a8f] flex items-center justify-center text-white flex-shrink-0">
+            <TrendingUp size={24} />
+          </div>
+          <div>
+            <h3 className="text-3xl font-bold text-gray-900">8.42</h3>
+            <p className="text-gray-600 text-sm">Current CGPA</p>
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all hover:-translate-y-1 flex gap-4">
+          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#7b8bb8] to-[#5b6ba8] flex items-center justify-center text-white flex-shrink-0">
+            <Calendar size={24} />
+          </div>
+          <div>
+            <h3 className="text-3xl font-bold text-gray-900">82%</h3>
+            <p className="text-gray-600 text-sm">Avg Attendance</p>
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all hover:-translate-y-1 flex gap-4">
+          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#8b9bc8] to-[#6b7bb8] flex items-center justify-center text-white flex-shrink-0">
+            <Clock size={24} />
+          </div>
+          <div>
+            <h3 className="text-3xl font-bold text-gray-900">1</h3>
+            <p className="text-gray-600 text-sm">Pending Review</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-3 bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900">Academic Performance Trend</h2>
+          </div>
+          <div className="p-6">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={cgpaData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="semester" stroke="#6b7280" />
+                <YAxis domain={[0, 10]} stroke="#6b7280" />
+                <Tooltip 
+                  contentStyle={{ 
+                    background: '#fff', 
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                  }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="cgpa" 
+                  stroke="#5b6ba8" 
+                  strokeWidth={3}
+                  dot={{ fill: '#5b6ba8', r: 6 }}
+                  activeDot={{ r: 8 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+            <div className="flex gap-4 mt-6 pt-6 border-t border-gray-200">
+              <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
+                <Upload size={16} />
+                Upload Grade Card
+              </button>
+              <button className="flex items-center gap-2 px-4 py-2 text-[#5b6ba8] hover:bg-[#5b6ba8]/10 rounded-xl transition-colors">
+                <Edit3 size={16} />
+                Edit Data
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900">Grade Card Status</h2>
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="flex justify-between items-center p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-colors">
+              <div className="flex items-center gap-3">
+                <CheckCircle size={20} className="text-green-700" />
+                <span className="font-medium">Semester 5</span>
+              </div>
+              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-semibold">Approved</span>
+            </div>
+            <div className="flex justify-between items-center p-4 bg-red-50 rounded-xl hover:bg-red-100 transition-colors">
+              <div className="flex items-center gap-3">
+                <X size={20} className="text-red-700" />
+                <span className="font-medium">Semester 4</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 bg-red-100 text-red-700 rounded-lg text-sm font-semibold">Rejected</span>
+                <button className="px-3 py-1 bg-[#5b6ba8] text-white rounded-lg text-sm font-semibold hover:bg-[#4d5a8f]">Edit</button>
+              </div>
+            </div>
+            <div className="flex justify-between items-center p-4 bg-yellow-50 rounded-xl hover:bg-yellow-100 transition-colors">
+              <div className="flex items-center gap-3">
+                <Clock size={20} className="text-yellow-700" />
+                <span className="font-medium">Semester 3</span>
+              </div>
+              <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-lg text-sm font-semibold">Pending</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900">Attendance Overview</h2>
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="flex gap-4 items-center">
+              <div className="flex-1">
+                <span className="block text-sm font-medium text-gray-900 mb-2">CS601 Database Systems</span>
+                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full" style={{width: '76%'}}></div>
+                </div>
+              </div>
+              <span className="text-xl font-bold text-yellow-700 font-mono">76%</span>
+            </div>
+            <div className="flex gap-4 items-center">
+              <div className="flex-1">
+                <span className="block text-sm font-medium text-gray-900 mb-2">CS602 AI/ML</span>
+                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full" style={{width: '93%'}}></div>
+                </div>
+              </div>
+              <span className="text-xl font-bold text-green-700 font-mono">93%</span>
+            </div>
+            <div className="flex gap-4 items-center">
+              <div className="flex-1">
+                <span className="block text-sm font-medium text-gray-900 mb-2">CS603 Software Eng</span>
+                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full" style={{width: '75%'}}></div>
+                </div>
+              </div>
+              <span className="text-xl font-bold text-yellow-700 font-mono">75%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 p-6 bg-yellow-50 border border-yellow-200 rounded-2xl animate-slideIn">
+        <AlertCircle size={20} className="text-yellow-700 flex-shrink-0" />
+        <div className="flex-1">
+          <strong className="block font-semibold text-gray-900 mb-1">Action Required</strong>
+          <p className="text-gray-700 text-sm">Your Semester 4 grade card was rejected. Reason: "SGPA does not match grade points"</p>
+        </div>
+        <button className="px-4 py-2 bg-[#5b6ba8] text-white rounded-xl font-semibold hover:bg-[#4d5a8f] transition-colors whitespace-nowrap">
+          Review & Resubmit
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Grade Management Component
+function GradeManagement() {
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  
+  const grades = [
+    { semester: 5, status: 'approved', sgpa: 8.65, cgpa: 8.42, date: '2024-12-15' },
+    { semester: 4, status: 'rejected', sgpa: 8.10, cgpa: 8.20, date: '2024-08-10', remarks: 'SGPA incorrect - verify calculation' },
+    { semester: 3, status: 'pending', sgpa: 8.50, cgpa: 8.25, date: '2024-06-05' }
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-4xl font-bold text-gray-900">Grade Card Management</h1>
+        <button 
+          className="flex items-center gap-2 px-6 py-3 bg-[#5b6ba8] text-white rounded-xl font-semibold hover:bg-[#4d5a8f] transition-all hover:-translate-y-0.5 hover:shadow-lg"
+          onClick={() => setShowUploadModal(true)}
+        >
+          <Plus size={16} />
+          Upload New Grade Card
+        </button>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Semester</th>
+              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">SGPA</th>
+              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">CGPA</th>
+              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Submitted</th>
+              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {grades.map(grade => (
+              <tr key={grade.semester} className="hover:bg-gray-50 transition-colors">
+                <td className="px-6 py-4">Semester {grade.semester}</td>
+                <td className="px-6 py-4">{grade.sgpa}</td>
+                <td className="px-6 py-4">{grade.cgpa}</td>
+                <td className="px-6 py-4">{grade.date}</td>
+                <td className="px-6 py-4">
+                  <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-semibold ${
+                    grade.status === 'approved' ? 'bg-green-100 text-green-700' :
+                    grade.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                    'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    {grade.status === 'approved' && <CheckCircle size={14} />}
+                    {grade.status === 'rejected' && <X size={14} />}
+                    {grade.status === 'pending' && <Clock size={14} />}
+                    {grade.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex gap-2">
+                    <button className="px-3 py-1 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-50">View</button>
+                    {grade.status === 'rejected' && (
+                      <button className="px-3 py-1 bg-[#5b6ba8] text-white rounded-lg text-sm font-semibold hover:bg-[#4d5a8f]">Edit</button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {showUploadModal && (
+        <UploadGradeCardModal onClose={() => setShowUploadModal(false)} />
+      )}
+    </div>
+  );
+}
+
+function UploadGradeCardModal({ onClose }) {
+  const [semester, setSemester] = useState('');
+  const [file, setFile] = useState(null);
+  const [extractedData, setExtractedData] = useState(null);
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    setFile(selectedFile);
+    
+    setTimeout(() => {
+      setExtractedData({
+        semester: semester,
+        sgpa: 8.65,
+        cgpa: 8.42,
+        credits: 24,
+        subjects: [
+          { code: 'CS601', name: 'Database Systems', grade: 'A+', credits: 4 },
+          { code: 'CS602', name: 'AI/ML', grade: 'A', credits: 4 },
+          { code: 'CS603', name: 'Software Engineering', grade: 'B+', credits: 3 }
+        ]
+      });
+    }, 1500);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6 animate-fadeIn">
+      <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-scaleIn">
+        <div className="p-8 border-b border-gray-200 flex justify-between items-center">
+          <h2 className="text-3xl font-bold text-gray-900">Upload Grade Card</h2>
+          <button 
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            onClick={onClose}
+          >
+            <X size={24} className="text-gray-500" />
+          </button>
+        </div>
+        
+        {!extractedData ? (
+          <form className="p-8 space-y-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Select Semester *</label>
+              <select 
+                value={semester} 
+                onChange={(e) => setSemester(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl outline-none focus:border-[#5b6ba8] focus:ring-4 focus:ring-[#5b6ba8]/20 transition-all"
+              >
+                <option value="">Select Semester</option>
+                {[1,2,3,4,5,6,7,8].map(sem => (
+                  <option key={sem} value={sem}>Semester {sem}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Upload Document *</label>
+              <div className="border-2 border-dashed border-gray-300 rounded-2xl p-12 text-center hover:border-[#5b6ba8] hover:bg-[#5b6ba8]/5 transition-all cursor-pointer relative">
+                <Upload size={48} className="text-gray-400 mx-auto mb-4" />
+                <p className="font-medium text-gray-900 mb-1">Drag & Drop or Click to upload</p>
+                <span className="text-sm text-gray-500">Supported: PDF, JPG, PNG • Max size: 5MB</span>
+                <input 
+                  type="file" 
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={handleFileChange}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-4 pt-6 border-t border-gray-200">
+              <button 
+                type="button" 
+                className="flex-1 px-6 py-3 border border-gray-300 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                onClick={onClose}
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                className="flex-1 px-6 py-3 bg-[#5b6ba8] text-white rounded-xl font-semibold hover:bg-[#4d5a8f] transition-colors disabled:opacity-50"
+                disabled={!semester || !file}
+              >
+                Upload & Extract
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="p-8 space-y-6">
+            <div className="flex items-center gap-4 p-4 bg-[#5b6ba8]/10 border border-[#5b6ba8]/30 rounded-xl">
+              <AlertCircle size={20} className="text-[#5b6ba8] flex-shrink-0" />
+              <p className="text-[#2d3561] font-medium">Please verify the extracted data</p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-600 mb-2">Semester</label>
+                <input type="number" value={extractedData.semester} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-600 mb-2">SGPA</label>
+                <input type="number" step="0.01" value={extractedData.sgpa} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-600 mb-2">CGPA</label>
+                <input type="number" step="0.01" value={extractedData.cgpa} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-600 mb-2">Credits</label>
+                <input type="number" value={extractedData.credits} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Subject Details</h3>
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="text-left px-4 py-2 text-sm font-semibold">Code</th>
+                    <th className="text-left px-4 py-2 text-sm font-semibold">Name</th>
+                    <th className="text-left px-4 py-2 text-sm font-semibold">Grade</th>
+                    <th className="text-left px-4 py-2 text-sm font-semibold">Credits</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {extractedData.subjects.map((subj, idx) => (
+                    <tr key={idx} className="border-t border-gray-200">
+                      <td className="px-4 py-2"><input type="text" value={subj.code} className="w-full px-2 py-1 border border-gray-300 rounded" /></td>
+                      <td className="px-4 py-2"><input type="text" value={subj.name} className="w-full px-2 py-1 border border-gray-300 rounded" /></td>
+                      <td className="px-4 py-2"><input type="text" value={subj.grade} className="w-full px-2 py-1 border border-gray-300 rounded" /></td>
+                      <td className="px-4 py-2"><input type="number" value={subj.credits} className="w-full px-2 py-1 border border-gray-300 rounded" /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            <div className="flex gap-4 pt-6 border-t border-gray-200">
+              <button 
+                className="flex-1 px-6 py-3 border border-gray-300 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                onClick={onClose}
+              >
+                Cancel
+              </button>
+              <button className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[#5b6ba8] text-white rounded-xl font-semibold hover:bg-[#4d5a8f] transition-colors">
+                <CheckCircle size={16} />
+                Confirm & Submit for Review
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Attendance Tracker Component
+function AttendanceTracker() {
+  const [view, setView] = useState('overview');
+  
+  const subjects = [
+    { code: 'CS601', name: 'Database Systems', attended: 32, total: 42, percentage: 76.2 },
+    { code: 'CS602', name: 'AI/ML', attended: 26, total: 28, percentage: 92.9 },
+    { code: 'CS603', name: 'Software Engineering', attended: 21, total: 28, percentage: 75.0 }
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-4xl font-bold text-gray-900">Attendance Tracker</h1>
+        <div className="flex bg-gray-100 p-1 rounded-xl gap-1">
+          {['overview', 'timetable', 'calendar'].map(v => (
+            <button
+              key={v}
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                view === v ? 'bg-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
+              }`}
+              onClick={() => setView(v)}
+            >
+              {v.charAt(0).toUpperCase() + v.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {view === 'overview' && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-center gap-4 p-4 bg-white rounded-2xl shadow-sm">
+            <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+              <ChevronRight size={16} className="rotate-180" />
+            </button>
+            <span className="font-semibold text-lg">Week of Feb 03 - Feb 09, 2026</span>
+            <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+              <ChevronRight size={16} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {subjects.map(subject => (
+              <div key={subject.code} className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">{subject.code}</h3>
+                    <p className="text-sm text-gray-600">{subject.name}</p>
+                  </div>
+                  <div className={`w-3 h-3 rounded-full ${
+                    subject.percentage >= 80 ? 'bg-green-500' :
+                    subject.percentage >= 75 ? 'bg-yellow-500' :
+                    'bg-red-500'
+                  }`}></div>
+                </div>
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="text-center">
+                    <span className="block text-3xl font-bold text-gray-900 font-mono">{subject.attended}</span>
+                    <span className="block text-xs text-gray-600 uppercase tracking-wider">Attended</span>
+                  </div>
+                  <div className="text-center">
+                    <span className="block text-3xl font-bold text-gray-900 font-mono">{subject.total}</span>
+                    <span className="block text-xs text-gray-600 uppercase tracking-wider">Total</span>
+                  </div>
+                  <div className="text-center">
+                    <span className={`block text-3xl font-bold font-mono ${
+                      subject.percentage >= 80 ? 'text-green-700' :
+                      subject.percentage >= 75 ? 'text-yellow-700' :
+                      'text-red-700'
+                    }`}>{subject.percentage}%</span>
+                    <span className="block text-xs text-gray-600 uppercase tracking-wider">Percentage</span>
+                  </div>
+                </div>
+                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full ${
+                      subject.percentage >= 80 ? 'bg-gradient-to-r from-green-400 to-green-600' :
+                      subject.percentage >= 75 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
+                      'bg-gradient-to-r from-red-400 to-red-600'
+                    }`}
+                    style={{width: `${subject.percentage}%`}}
+                  ></div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Today's Classes</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                <div className="font-semibold text-[#5b6ba8] font-mono flex-shrink-0">9:00 AM</div>
+                <div className="flex-1">
+                  <strong className="block">CS601 Database Systems</strong>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" defaultChecked className="w-5 h-5 rounded" />
+                  <span>Present</span>
+                </label>
+              </div>
+              <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                <div className="font-semibold text-[#5b6ba8] font-mono flex-shrink-0">10:00 AM</div>
+                <div className="flex-1">
+                  <strong className="block">CS603 Software Engineering</strong>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" className="w-5 h-5 rounded" />
+                  <span>Present</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {view === 'timetable' && <TimetableSetup />}
+      {view === 'calendar' && <AttendanceCalendar />}
+    </div>
+  );
+}
+
+function TimetableSetup() {
+  const [subjects, setSubjects] = useState([
+    { code: 'CS601', name: 'Database Systems', weeklyClasses: 3 },
+    { code: 'CS602', name: 'AI/ML', weeklyClasses: 2 }
+  ]);
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-gray-900">Step 1: Add Subjects</h2>
+          <button className="flex items-center gap-2 px-4 py-2 bg-[#5b6ba8] text-white rounded-xl font-semibold hover:bg-[#4d5a8f]">
+            <Plus size={16} />
+            Add Subject
+          </button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left px-6 py-3 text-sm font-semibold">Subject Code</th>
+                <th className="text-left px-6 py-3 text-sm font-semibold">Subject Name</th>
+                <th className="text-left px-6 py-3 text-sm font-semibold">Weekly Classes</th>
+                <th className="px-6 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {subjects.map((subj, idx) => (
+                <tr key={idx} className="border-t border-gray-200">
+                  <td className="px-6 py-3"><input type="text" value={subj.code} className="w-full px-3 py-2 border border-gray-300 rounded-lg" /></td>
+                  <td className="px-6 py-3"><input type="text" value={subj.name} className="w-full px-3 py-2 border border-gray-300 rounded-lg" /></td>
+                  <td className="px-6 py-3"><input type="number" value={subj.weeklyClasses} className="w-full px-3 py-2 border border-gray-300 rounded-lg" /></td>
+                  <td className="px-6 py-3">
+                    <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">Step 2: Define Weekly Schedule</h2>
+        </div>
+        <div className="p-6 overflow-x-auto">
+          <div className="min-w-[600px]">
+            <div className="grid grid-cols-7 gap-px bg-gray-200 mb-px">
+              <div className="bg-gray-50 p-3 font-semibold text-center">Time</div>
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} className="bg-gray-50 p-3 font-semibold text-center">{day}</div>
+              ))}
+            </div>
+            {['9-10', '10-11', '11-12', '12-1', '2-3', '3-4'].map(time => (
+              <div key={time} className="grid grid-cols-7 gap-px bg-gray-200 mb-px">
+                <div className="bg-white p-3 font-semibold text-[#5b6ba8] font-mono text-center">{time}</div>
+                <div className="bg-[#5b6ba8]/10 p-3 text-center cursor-pointer hover:bg-[#5b6ba8]/20 transition-colors font-medium text-[#5b6ba8] rounded-lg m-1">CS601</div>
+                <div className="bg-[#5b6ba8]/10 p-3 text-center cursor-pointer hover:bg-[#5b6ba8]/20 transition-colors font-medium text-[#5b6ba8] rounded-lg m-1">CS602</div>
+                <div className="bg-[#5b6ba8]/10 p-3 text-center cursor-pointer hover:bg-[#5b6ba8]/20 transition-colors font-medium text-[#5b6ba8] rounded-lg m-1">CS601</div>
+                <div className="bg-white p-3"></div>
+                <div className="bg-[#5b6ba8]/10 p-3 text-center cursor-pointer hover:bg-[#5b6ba8]/20 transition-colors font-medium text-[#5b6ba8] rounded-lg m-1">CS601</div>
+                <div className="bg-white p-3"></div>
+              </div>
+            ))}
+          </div>
+          <button className="flex items-center gap-2 mt-6 px-6 py-3 bg-[#5b6ba8] text-white rounded-xl font-semibold hover:bg-[#4d5a8f]">
+            <Save size={16} />
+            Save Timetable
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AttendanceCalendar() {
+  const daysInMonth = 31;
+  const firstDay = 3;
+  
+  return (
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+        <h2 className="text-xl font-semibold text-gray-900">Attendance Calendar - CS601 Database Systems</h2>
+        <div className="flex items-center gap-4">
+          <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+            <ChevronRight size={16} className="rotate-180" />
+          </button>
+          <span className="font-semibold">February 2026</span>
+          <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      </div>
+      <div className="p-6">
+        <div className="grid grid-cols-7 gap-2 mb-2">
+          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+            <div key={day} className="text-center font-semibold text-sm text-gray-600 p-2">{day}</div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-2">
+          {[...Array(firstDay - 1)].map((_, i) => <div key={`empty-${i}`}></div>)}
+          {[...Array(daysInMonth)].map((_, i) => {
+            const day = i + 1;
+            const hasClass = [1,3,5,8,10,12,15,17,19].includes(day);
+            const present = [1,3,5,8,10,12].includes(day);
+            const absent = [15,17].includes(day);
+            
+            return (
+              <div 
+                key={day} 
+                className={`aspect-square flex flex-col items-center justify-center rounded-lg cursor-pointer transition-all hover:scale-105 relative ${
+                  present ? 'bg-green-100 border-2 border-green-500' :
+                  absent ? 'bg-red-100 border-2 border-red-500' :
+                  hasClass ? 'bg-white border-2 border-gray-300' :
+                  'bg-gray-50'
+                }`}
+              >
+                <span className="font-semibold text-sm">{day}</span>
+                {present && <span className="text-xl">✓</span>}
+                {absent && <span className="text-xl">✗</span>}
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex gap-6 mt-6 pt-6 border-t border-gray-200">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-green-100 border-2 border-green-500"></div>
+            <span className="text-sm">Present</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-red-100 border-2 border-red-500"></div>
+            <span className="text-sm">Absent</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-gray-50 border-2 border-gray-300"></div>
+            <span className="text-sm">No Class</span>
+          </div>
+        </div>
+        <div className="mt-6 p-4 bg-gray-50 rounded-xl">
+          <strong>Total:</strong> 22 Present | 4 Absent | Attendance: <span className="text-green-700 font-bold">84.6%</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Target Calculator Component
+function TargetCalculator() {
+  const [formData, setFormData] = useState({
+    currentCGPA: 8.25,
+    creditsCompleted: 120,
+    currentSemesterCredits: 24,
+    targetCGPA: 8.50
+  });
+  const [result, setResult] = useState(null);
+
+  const calculateRequiredSGPA = () => {
+    const { currentCGPA, creditsCompleted, currentSemesterCredits, targetCGPA } = formData;
+    const totalCreditsAfter = creditsCompleted + currentSemesterCredits;
+    const requiredSGPA = ((targetCGPA * totalCreditsAfter) - (currentCGPA * creditsCompleted)) / currentSemesterCredits;
+    
+    let feasibility = 'achievable';
+    if (requiredSGPA > 10) feasibility = 'impossible';
+    else if (requiredSGPA > 9.5) feasibility = 'challenging';
+    else if (requiredSGPA <= 0) feasibility = 'achieved';
+    
+    setResult({ requiredSGPA: requiredSGPA.toFixed(2), feasibility });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">Target CGPA Calculator</h1>
+        <p className="text-gray-600">Plan your academic goals and calculate required performance</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden lg:sticky lg:top-24">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900">Set Your Academic Goal</h2>
+          </div>
+          <div className="p-6 space-y-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Current CGPA *</label>
+              <input 
+                type="number" 
+                step="0.01"
+                value={formData.currentCGPA}
+                onChange={(e) => setFormData({...formData, currentCGPA: parseFloat(e.target.value)})}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl outline-none focus:border-[#5b6ba8] focus:ring-4 focus:ring-[#5b6ba8]/20"
+              />
+              <span className="text-xs text-gray-500 mt-1 block">Auto-filled from your records</span>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Credits Completed *</label>
+              <input 
+                type="number"
+                value={formData.creditsCompleted}
+                onChange={(e) => setFormData({...formData, creditsCompleted: parseInt(e.target.value)})}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl outline-none focus:border-[#5b6ba8] focus:ring-4 focus:ring-[#5b6ba8]/20"
+              />
+              <span className="text-xs text-gray-500 mt-1 block">Total credits earned up to last semester</span>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Current Semester Credits *</label>
+              <input 
+                type="number"
+                value={formData.currentSemesterCredits}
+                onChange={(e) => setFormData({...formData, currentSemesterCredits: parseInt(e.target.value)})}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl outline-none focus:border-[#5b6ba8] focus:ring-4 focus:ring-[#5b6ba8]/20"
+              />
+              <span className="text-xs text-gray-500 mt-1 block">Credits you're enrolled in this semester</span>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Target CGPA *</label>
+              <input 
+                type="number"
+                step="0.01"
+                value={formData.targetCGPA}
+                onChange={(e) => setFormData({...formData, targetCGPA: parseFloat(e.target.value)})}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl outline-none focus:border-[#5b6ba8] focus:ring-4 focus:ring-[#5b6ba8]/20"
+              />
+              <span className="text-xs text-gray-500 mt-1 block">Your desired CGPA goal</span>
+            </div>
+
+            <button 
+              className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-[#5b6ba8] text-white rounded-xl font-semibold hover:bg-[#4d5a8f] transition-all hover:shadow-lg"
+              onClick={calculateRequiredSGPA}
+            >
+              <Target size={16} />
+              Calculate Required SGPA
+            </button>
+          </div>
+        </div>
+
+        {result && (
+          <div className={`rounded-2xl overflow-hidden shadow-lg border-2 animate-slideIn ${
+            result.feasibility === 'achievable' ? 'border-green-500 bg-green-50' :
+            result.feasibility === 'challenging' ? 'border-yellow-500 bg-yellow-50' :
+            result.feasibility === 'impossible' ? 'border-red-500 bg-red-50' :
+            'border-[#5b6ba8] bg-gradient-to-br from-green-50 to-blue-50'
+          }`}>
+            <div className={`p-6 border-b-2 ${
+              result.feasibility === 'achievable' ? 'border-green-500' :
+              result.feasibility === 'challenging' ? 'border-yellow-500' :
+              result.feasibility === 'impossible' ? 'border-red-500' :
+              'border-[#5b6ba8]'
+            }`}>
+              <h2 className="text-2xl font-bold">📊 Result: {result.feasibility.toUpperCase()}</h2>
+            </div>
+            <div className="p-8 space-y-6">
+              <p className="text-lg">To achieve CGPA of <strong>{formData.targetCGPA}</strong>, you need:</p>
+              
+              <div className="flex items-center justify-between p-6 bg-white rounded-2xl shadow-sm">
+                <span className="text-lg font-medium">Required SGPA:</span>
+                <span className="text-5xl font-bold text-[#5b6ba8] font-mono">{result.requiredSGPA}</span>
+              </div>
+
+              {result.feasibility === 'achievable' && (
+                <div className="flex gap-4 p-6 bg-white rounded-2xl">
+                  <CheckCircle size={24} className="text-green-700 flex-shrink-0 mt-1" />
+                  <div>
+                    <strong className="block text-lg mb-2">This is achievable with focused effort!</strong>
+                    <ul className="list-disc pl-5 space-y-1 text-gray-700">
+                      <li>Aim for A/A+ grades in core subjects</li>
+                      <li>Maintain &gt;85% attendance</li>
+                      <li>Focus on high-weightage courses</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {result.feasibility === 'challenging' && (
+                <div className="flex gap-4 p-6 bg-white rounded-2xl">
+                  <AlertCircle size={24} className="text-yellow-700 flex-shrink-0 mt-1" />
+                  <div>
+                    <strong className="block text-lg mb-2">This requires near-perfect performance</strong>
+                    <ul className="list-disc pl-5 space-y-1 text-gray-700">
+                      <li>Focus on high-weightage subjects</li>
+                      <li>Seek additional guidance from faculty</li>
+                      <li>Consider if this is realistic</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {result.feasibility === 'impossible' && (
+                <div className="flex gap-4 p-6 bg-white rounded-2xl">
+                  <X size={24} className="text-red-700 flex-shrink-0 mt-1" />
+                  <div>
+                    <strong className="block text-lg mb-2">This target exceeds maximum SGPA (10.0)</strong>
+                    <p className="mb-2">It's mathematically impossible this semester. Consider:</p>
+                    <ul className="list-disc pl-5 space-y-1 text-gray-700">
+                      <li>Lowering target to realistic value</li>
+                      <li>Planning multi-semester strategy</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {result.feasibility === 'achieved' && (
+                <div className="flex gap-4 p-6 bg-white rounded-2xl">
+                  <CheckCircle size={24} className="text-green-700 flex-shrink-0 mt-1" />
+                  <div>
+                    <strong className="block text-lg mb-2">Congratulations! Target already achieved!</strong>
+                    <p>Your current CGPA ({formData.currentCGPA}) already exceeds this target. You can maintain or aim higher.</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-4">
+                <button className="flex-1 px-6 py-3 border border-gray-300 bg-white rounded-xl font-semibold hover:bg-gray-50">
+                  Save Target
+                </button>
+                <button className="flex-1 px-6 py-3 text-[#5b6ba8] hover:bg-[#5b6ba8]/10 rounded-xl font-semibold" onClick={() => setResult(null)}>
+                  Try Another Target
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Academic Chatbot Component
+function AcademicChatbot() {
+  const [messages, setMessages] = useState([
+    {
+      sender: 'bot',
+      text: "Hi! I'm your academic advisor. I've analyzed your performance data. Here's what I found:",
+      insights: [
+        "📊 Your CGPA trend shows a 0.3 dip in Sem 4",
+        "📉 Subjects needing attention: CS402, MA401",
+        "💡 You excel in programming subjects"
+      ],
+      suggestions: [
+        { label: 'Improve weak subjects', action: 'weakness' },
+        { label: 'Suggest electives', action: 'electives' },
+        { label: 'Analyze attendance', action: 'attendance' }
+      ]
+    }
+  ]);
+  const [inputText, setInputText] = useState('');
+
+  const handleSend = () => {
+    if (!inputText.trim()) return;
+    
+    setMessages([...messages, { sender: 'user', text: inputText }]);
+    
+    setTimeout(() => {
+      setMessages(prev => [...prev, {
+        sender: 'bot',
+        text: "Based on your strong performance in CS501 (A+) and CS502 (A), I recommend these electives:",
+        recommendations: [
+          { name: 'Advanced Machine Learning', reason: 'Builds on CS503 where you scored A+', relevance: 'High' },
+          { name: 'Cloud Computing', reason: 'Complements your programming skills', relevance: 'Very High' },
+          { name: 'Blockchain Technology', reason: 'Emerging field matching your interests', relevance: 'Medium' }
+        ]
+      }]);
+    }, 1000);
+    
+    setInputText('');
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">🤖 Academic Guidance Assistant</h1>
+        <p className="text-gray-600">Get personalized insights based on your academic performance</p>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-lg overflow-hidden h-[600px] flex flex-col">
+        <div className="flex-1 overflow-y-auto p-8 space-y-6">
+          {messages.map((msg, idx) => (
+            <div key={idx} className={`flex gap-4 animate-fadeInUp ${msg.sender === 'user' ? 'justify-end' : ''}`}>
+              {msg.sender === 'bot' && (
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#5b6ba8] to-[#4d5a8f] flex items-center justify-center text-white flex-shrink-0 text-xl">
+                  🤖
+                </div>
+              )}
+              <div className={`max-w-[80%] ${msg.sender === 'user' ? 'max-w-[70%]' : ''}`}>
+                <div className={`p-4 rounded-2xl ${
+                  msg.sender === 'user' 
+                    ? 'bg-[#5b6ba8] text-white rounded-br-none' 
+                    : 'bg-gray-100 rounded-bl-none'
+                }`}>
+                  <p className="mb-0">{msg.text}</p>
+                  
+                  {msg.insights && (
+                    <ul className="mt-4 space-y-2">
+                      {msg.insights.map((insight, i) => (
+                        <li key={i} className="p-2 bg-white rounded-lg text-gray-900 text-sm">{insight}</li>
+                      ))}
+                    </ul>
+                  )}
+                  
+                  {msg.suggestions && (
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <p className="font-semibold mb-2">What would you like to explore?</p>
+                      <div className="flex flex-wrap gap-2">
+                        {msg.suggestions.map((sug, i) => (
+                          <button key={i} className="px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm hover:bg-[#5b6ba8]/10 hover:border-[#5b6ba8] hover:text-[#5b6ba8] transition-all">
+                            {sug.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {msg.recommendations && (
+                    <div className="mt-4 space-y-3">
+                      {msg.recommendations.map((rec, i) => (
+                        <div key={i} className="p-4 bg-white border border-gray-200 rounded-2xl">
+                          <h4 className="font-semibold text-[#5b6ba8] mb-2">{i + 1}. {rec.name}</h4>
+                          <p className="text-sm text-gray-700 mb-2"><strong>Why:</strong> {rec.reason}</p>
+                          <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold mb-3">
+                            Career Relevance: {rec.relevance}
+                          </span>
+                          <div className="flex gap-2">
+                            <button className="px-3 py-1 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-50">
+                              View Syllabus
+                            </button>
+                            <button className="px-3 py-1 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-50">
+                              Prerequisites
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex gap-4 p-6 border-t border-gray-200 bg-gray-50">
+          <input 
+            type="text" 
+            placeholder="Type your question..."
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+            className="flex-1 px-4 py-3 border border-gray-300 rounded-2xl outline-none focus:border-[#5b6ba8] focus:ring-4 focus:ring-[#5b6ba8]/20"
+          />
+          <button 
+            className="px-6 py-3 bg-[#5b6ba8] text-white rounded-2xl font-semibold hover:bg-[#4d5a8f] transition-colors"
+            onClick={handleSend}
+          >
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Floating Chatbot Widget
+function ChatbotWidget() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      {!isOpen && (
+        <button 
+          className="fixed bottom-6 right-6 flex items-center gap-2 px-5 py-3 bg-gradient-to-br from-[#5b6ba8] to-[#4d5a8f] text-white rounded-full shadow-2xl hover:shadow-3xl transition-all hover:-translate-y-1 z-50 font-semibold"
+          onClick={() => setIsOpen(true)}
+        >
+          <MessageCircle size={24} />
+          <span>Ask Me</span>
+        </button>
+      )}
+      
+      {isOpen && (
+        <div className="fixed bottom-6 right-6 w-[400px] h-[600px] bg-white rounded-3xl shadow-2xl overflow-hidden z-50 flex flex-col animate-scaleIn">
+          <div className="flex justify-between items-center p-6 bg-gradient-to-br from-[#5b6ba8] to-[#4d5a8f] text-white">
+            <h3 className="text-lg font-semibold">🤖 Academic Assistant</h3>
+            <button 
+              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              <X size={20} />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex gap-4">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#5b6ba8] to-[#4d5a8f] flex items-center justify-center text-white flex-shrink-0 text-xl">
+                🤖
+              </div>
+              <div className="flex-1">
+                <div className="p-4 bg-gray-100 rounded-2xl rounded-bl-none">
+                  <p>Hi! How can I help with your academics today?</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2 p-4 border-t border-gray-200">
+            <input 
+              type="text" 
+              placeholder="Type a message..." 
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-xl outline-none focus:border-[#5b6ba8]"
+            />
+            <button className="px-4 py-2 bg-[#5b6ba8] text-white rounded-xl font-semibold hover:bg-[#4d5a8f]">
+              Send
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+export default Student;
