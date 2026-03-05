@@ -52,11 +52,7 @@ const StudentDashboard = () => {
     },
   });
   const [attendanceData, setAttendanceData] = useState({
-    activeSlots: [A1,B1,P2],
-    totalSlots: [A1,B1,P2,C1,C2],
-    attendance:{
-      
-    }
+    
   });
   const [coCurricularData, setCoCurricularData] = useState([
     { activity: 'Coding Club', position: 'Member', year: '2023' },
