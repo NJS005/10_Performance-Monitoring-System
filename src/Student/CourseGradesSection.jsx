@@ -17,11 +17,11 @@ async function extractTextFromPDF(file) {
 
         const pdf = await window.pdfjsLib.getDocument({ data: typedArray }).promise;
         let fullText = '';
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
+        
+          const page = await pdf.getPage(pdf.numPages);
           const content = await page.getTextContent();
           fullText += content.items.map((item) => item.str).join(' ') + '\n';
-        }
+        
         resolve(fullText);
       } catch (err) {
         reject(err);
@@ -143,8 +143,7 @@ function AutoFillModal({ onClose, onApply, existingCourses }) {
         const match = allExisting.find(
           (c) =>
             c.code.toLowerCase() === s.code.toLowerCase() ||
-            c.name.toLowerCase().includes(s.subject.toLowerCase()) ||
-            s.subject.toLowerCase().includes(c.name.toLowerCase())
+            c.name.toLowerCase().includes(s.subject.toLowerCase())
         );
         return {
           parsedIndex: idx,

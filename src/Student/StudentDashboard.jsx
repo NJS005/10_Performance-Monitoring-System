@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PersonalDetailsSection } from './PersonalDetailsSection';
 import { CourseGradesSection } from './CourseGradesSection';
 import { CGPATrackerGraph } from './CGPATrackerGraph';
@@ -9,8 +9,7 @@ import AcademicChatbot from './AcademicChatbot';
 
 const StudentDashboard = () => {
   const [activeView, setActiveView] = useState('overview');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);  
   // ── Single unified student object ──────────────────────────────────────────
   const [studentData, setStudentData] = useState({
     // Personal details
@@ -19,26 +18,58 @@ const StudentDashboard = () => {
     department: 'Computer Science',
     program: 'B.Tech',
     batch: '2023',
-    currentSemester: 5,
+    currentSemester: null,
     batchType: 'morning',         
     verificationStatus: 'pending',
-
+    personalVerificationStatus: 'verified',
+    permanentAddress :{
+      line1: '123 Main Street',
+      line2: 'Apt 4B',
+      city: 'Springfield',
+      state: 'IL',
+      zip: '62704',
+      country: 'USA'
+    },
+    temporaryAddress: {
+      line1: '456 College Ave',
+      line2: 'Dorm 12, Room 34',
+    },
+    PhoneNo: '123-456-7890',
+    email: '',
+    ParentInfo: {
+      fatherName: 'Rajesh Kumar',
+      motherName: 'Suman Kumar',
+      guardianContact: '987-654-3210'
+    },
     // Academic data
     courses: {
       core: [
-        // { id: 1, code: 'CS301', name: 'Data Structures',   credits: 4, grade: 'A', semester: 3 },
-        // { id: 2, code: 'CS302', name: 'Algorithms',        credits: 4, grade: 'S', semester: 3 },
-        // { id: 3, code: 'CS303', name: 'Database Systems',  credits: 3, grade: 'A', semester: 4 },
-        // { id: 4, code: 'CS304', name: 'Operating Systems', credits: 4, grade: 'B', semester: 4 },
-        // { id: 5, code: 'CS305', name: 'Computer Networks', credits: 3, grade: 'A', semester: 5 },
+        
       ],
       elective: [
-        // { id: 6, code: 'CS401', name: 'Machine Learning', credits: 3, grade: 'S', semester: 5 },
-        // { id: 7, code: 'CS402', name: 'Cloud Computing',  credits: 3, grade: 'A', semester: 5 },
+  
       ],
     },
   });
+  const [attendanceData, setAttendanceData] = useState({
+    'CS101': { attended: 18, total: 20 },
+    'CS102': { attended: 15, total: 20 },
+  });
+  const [coCurricularData, setCoCurricularData] = useState([
+    { activity: 'Coding Club', position: 'Member', year: '2023' },
+    { activity: 'Basketball Team', position: 'Captain', year: '2022' },
+  ]);
 
+  useEffect(() => {
+    let year = parseInt(studentData.batch);
+    let currentYear = new Date().getFullYear();
+    let month = new Date().getMonth() + 1;
+    if (month >= 7) currentYear += 1; 
+    setStudentData((prev) => ({
+      ...prev,
+      currentSemester: (currentYear - year) * 2 + (month < 7 ? 0 : 1)
+    }));
+  }, []);
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   // Convenience setter that deep-merges a patch into studentData
@@ -148,6 +179,15 @@ const StudentDashboard = () => {
       case 'overview':
         return (
           <div className="space-y-6">
+            <div>
+                <PersonalDetailsSection
+            studentData={studentData}
+            setStudentData={updateStudentData}
+            verificationStatus={studentData.personalVerificationStatus}
+            edit = {false}
+            showAll = {false}
+          />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* CGPA card */}
               <div className="bg-white rounded-2xl shadow-xl p-6">
@@ -205,7 +245,7 @@ const StudentDashboard = () => {
                 courses={studentData.courses}
                 setCourses={setCourses}
                 getGradePoint={getGradePoint}
-                showSemester={5}
+                showSemester={studentData.currentSemester - 1}
               />
               <CGPATrackerGraph gpaData={gpaData} currentCGPA={currentCGPA} />
             </div>
@@ -217,7 +257,9 @@ const StudentDashboard = () => {
           <PersonalDetailsSection
             studentData={studentData}
             setStudentData={updateStudentData}
-            verificationStatus={studentData.verificationStatus}
+            verificationStatus={studentData.personalVerificationStatus}
+            edit = {true}
+            showAll = {true}
           />
         );
 

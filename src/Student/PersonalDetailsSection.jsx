@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 
 
-export const PersonalDetailsSection = ({ studentData, setStudentData, verificationStatus }) => {
+export const PersonalDetailsSection = ({ studentData, setStudentData, verificationStatus ,edit ,showAll }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(studentData);
 
@@ -12,7 +12,7 @@ export const PersonalDetailsSection = ({ studentData, setStudentData, verificati
   };
 
   const handleSave = () => {
-    setStudentData(editData);
+    setStudentData({ ...editData, personalVerificationStatus: 'pending' });
     setIsEditing(false);
   };
 
@@ -27,9 +27,10 @@ export const PersonalDetailsSection = ({ studentData, setStudentData, verificati
 
   // Status badge colors
   const statusColors = {
-    pending: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
-    approved: 'bg-green-500/20 text-green-300 border-green-500/30',
-    rejected: 'bg-red-500/20 text-red-300 border-red-500/30'
+    pending: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30',
+    verified: 'bg-green-500/20 text-green-500 border-green-500/30',
+    approved: 'bg-green-500/20 text-green-500 border-green-500/30',
+    rejected: 'bg-red-500/20 text-red-500 border-red-500/30'
   };
 
   return (
@@ -38,7 +39,7 @@ export const PersonalDetailsSection = ({ studentData, setStudentData, verificati
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-2xl font-bold text-gray-900 mb-1">Personal Details</h3>
-          <p className="text-gray-500">View and manage your profile information</p>
+          <p className="text-gray-500">View {!edit ? '' : 'and manage'} your profile information</p>
         </div>
         <div className="flex items-center gap-3">
           {/* Verification Status Badge (FR-STU-06) */}
@@ -48,7 +49,7 @@ export const PersonalDetailsSection = ({ studentData, setStudentData, verificati
           
           {/* Edit/Save Buttons */}
           {!isEditing ? (
-            <button
+            edit && <button
               onClick={handleEdit}
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
             >
@@ -204,6 +205,13 @@ export const PersonalDetailsSection = ({ studentData, setStudentData, verificati
           )}
         </div>
       </div>
+      {showAll ? (
+        <div>
+          <button className="mt-6 text-sm text-indigo-600 hover:text-indigo-800 transition-colors duration-200">
+            Show All Details
+          </button>
+        </div>
+      ):null}
     </div>
   );
 };
