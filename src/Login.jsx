@@ -50,7 +50,7 @@ export default function LoginPage() {
   if (role === "Student") {
     Navigate("/student");
   } else if (role === "Faculty Advisor") {
-    alert("Faculty dashboard coming soon!");
+    Navigate("/faculty/dashboard");
   }
 }
 
