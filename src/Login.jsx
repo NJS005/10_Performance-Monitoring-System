@@ -54,6 +54,11 @@ export default function LoginPage() {
   }
 }
 
+const handleAdminClick = () => {
+  alert("Initiating Google Auth for Admin...");
+  Navigate("/admin/dashboard");
+}
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -234,7 +239,7 @@ export default function LoginPage() {
             {/* Admin link */}
             <button
               className="glow-btn w-full py-3 rounded-xl border-2 border-indigo-300 bg-indigo-50 text-indigo-600 font-semibold text-sm tracking-wide hover:bg-indigo-100 hover:border-indigo-400 transition-all duration-300 cursor-pointer"
-              onClick={() => alert("Initiating Google Auth for Admin...")}
+              onClick={() => handleAdminClick()}
             >
               Admin Access
             </button>
