@@ -9,12 +9,13 @@ import AdminDashboard from './admin/pages/AdminDashboard';
 
 export default function App() {
   return (
+    
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/student" element={<StudentDashboard />} />
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="/admin" element={<AdminLayout><AdminDashboard /></AdminLayout>}>
+          <Route path="dashboard" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
         </Route>
         <Route path="/faculty/*" element={<FacultyLayout />}>
           <Route path="*" element={<FacultyRoutes />} />
