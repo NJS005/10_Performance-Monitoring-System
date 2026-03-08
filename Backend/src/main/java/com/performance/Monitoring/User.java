@@ -38,7 +38,7 @@ public class User {
     }
 
     public void setRole(String role) {
-        thi s.role = role;
+        this.role = role;
     }
 
     public String getEmail() {
