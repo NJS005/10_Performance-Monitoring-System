@@ -71,7 +71,21 @@ export default function LoginPage() {
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem("user", JSON.stringify(data.user));
-        if (selectedRole === "Student") Navigate("/student");
+        if (selectedRole === "Student")
+        {
+          const rollNo = data.user.email.split('_')[1].split('@')[0].toUpperCase();
+          if(data["Existing User"])
+          {
+               alert("Welcome back, " + data.user.name + "!");
+            Navigate("/student", { state: { rollNo: rollNo } });
+          }
+          else 
+          {
+            alert("Welcome, " + data.user.name + "! Your account has been created.");
+            Navigate("/student/details", { state: { rollNo: rollNo } });
+          }
+          
+        }
         else if (selectedRole === "Faculty Advisor") Navigate("/faculty/dashboard");
         else if (selectedRole === "Admin") Navigate("/admin/dashboard");
       } 

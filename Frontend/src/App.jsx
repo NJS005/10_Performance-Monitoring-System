@@ -7,6 +7,7 @@ import FacultyLayout from "./faculty/layouts/FacultyLayout";
 import AdminLayout from './admin/layout/AdminLayout';
 import AdminDashboard from './admin/pages/AdminDashboard';
 import ProtectedRoute from "./ProtectedRoute"; 
+import StudentDetailCollection from "./Student/StudentDetails";
 
 export default function App() {
   return (
@@ -22,6 +23,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRole="Student">
                 <StudentDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/student/details" 
+            element={
+              <ProtectedRoute allowedRole="Student">
+                <StudentDetailCollection />
               </ProtectedRoute>
             } 
           />

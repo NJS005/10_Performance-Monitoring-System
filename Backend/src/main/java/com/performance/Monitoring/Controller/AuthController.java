@@ -1,9 +1,12 @@
-package com.performance.Monitoring;
+package com.performance.Monitoring.Controller;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import com.performance.Monitoring.Modal.User;
+import com.performance.Monitoring.Repo.UserRepo;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +22,8 @@ public class AuthController {
 
     @Autowired
     private UserRepo userRepository;
+
+    
 
 
     private static final String CLIENT_ID = "750796996880-c4875choh43f78urk1d5gt06orqln9q1.apps.googleusercontent.com";
@@ -48,9 +53,15 @@ public class AuthController {
 
                 Optional<User> existingUser = userRepository.findByEmail(email);
                 User user;
-
+                
                 if (existingUser.isPresent()) {
                     user = existingUser.get();
+                    return ResponseEntity.ok(Map.of(
+                            "Existing User", "Login successful",
+                            "user", user,
+                            "email", email
+                    ));
+
                 } else {
 
                     user = new User();
@@ -59,12 +70,13 @@ public class AuthController {
                     user.setPictureUrl((String) payload.get("picture"));
                     user.setRole(requestedRole);
                     userRepository.save(user);
+                    return ResponseEntity.ok(Map.of(
+                            "New User", "Login successful",
+                            "user", user ,
+                            "email", email
+                    ));
                 }
 
-                return ResponseEntity.ok(Map.of(
-                        "message", "Login successful",
-                        "user", user
-                ));
             }
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error verifying token");

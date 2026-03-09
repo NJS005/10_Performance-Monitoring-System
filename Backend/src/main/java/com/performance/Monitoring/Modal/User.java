@@ -1,4 +1,4 @@
-package com.performance.Monitoring;
+package com.performance.Monitoring.Modal;
 
 import jakarta.persistence.*;
 
