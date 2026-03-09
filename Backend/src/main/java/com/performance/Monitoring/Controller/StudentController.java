@@ -1,5 +1,7 @@
 package com.performance.Monitoring.Controller;
 
+import java.util.List;
+
 // import org.checkerframework.checker.units.qual.s;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.performance.Monitoring.Modal.Student;
 import com.performance.Monitoring.Service.StudentService;
 import org.springframework.web.bind.annotation.PathVariable;
+import com.performance.Monitoring.Modal.Courses;
 
 @RestController
 @RequestMapping("/api/student")
@@ -36,5 +39,17 @@ public class StudentController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @GetMapping("/courses/{rollNumber}")
+    public ResponseEntity<?> getStudentCourses(@PathVariable String rollNumber) {
+        List<Courses> courses = studentService.getStudentCourses(rollNumber);
+        return ResponseEntity.ok(courses);
+    }
+
+    @PostMapping("/courses/{rollNumber}")
+    public ResponseEntity<String> addStudentCourse(@PathVariable String rollNumber, @RequestBody List<Courses> courses) {
+        studentService.addStudentCourses(rollNumber, courses);
+        return ResponseEntity.ok("Course added successfully");
     }
 }
