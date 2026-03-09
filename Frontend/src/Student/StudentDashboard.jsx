@@ -6,84 +6,75 @@ import { TargetCGPACalculator } from './TargetCGPACalculator';
 import { AttendanceTracker } from './AttendanceTracker';
 import { CoCurricularActivities } from './CoCurricularActivities';
 import AcademicChatbot from './AcademicChatbot';
+import { useLocation } from "react-router-dom";
 
 const StudentDashboard = () => {
+  const location = useLocation();
+  const rollNo = location.state?.rollNo || '';
+
   const [activeView, setActiveView] = useState('overview');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);  
-  // ── Single unified student object ──────────────────────────────────────────
-  const [studentData, setStudentData] = useState({
-    // Personal details
-    name: 'Pankaj Kumar R',
-    rollNumber: 'B230483CS',
-    department: 'Computer Science',
-    program: 'B.Tech',
-    batch: '2023',
-    currentSemester: null,
-    batchType: 'morning',         
-    verificationStatus: 'pending',
-    personalVerificationStatus: 'verified',
-    permanentAddress :{
-      line1: '123 Main Street',
-      line2: 'Apt 4B',
-      city: 'Springfield',
-      state: 'IL',
-      zip: '62704',
-      country: 'USA'
-    },
-    temporaryAddress: {
-      line1: '456 College Ave',
-      line2: 'Dorm 12, Room 34',
-    },
-    PhoneNo: '123-456-7890',
-    email: '',
-    ParentInfo: {
-      fatherName: 'Rajesh Kumar',
-      motherName: 'Suman Kumar',
-      guardianContact: '987-654-3210'
-    },
-    // Academic data
-    courses: {
-      core: [
-        
-      ],
-      elective: [
-  
-      ],
-    },
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [studentData, setStudentData] = useState(null);   // ← null, not undefined
+  const [currentSemester, setCurrentSemester] = useState(null);
+
+  const [courseDetails, setCourseDetails] = useState({
+    core: [],
+    elective: [],
   });
-  const [attendanceData, setAttendanceData] = useState({
-    
-  });
+
   const [coCurricularData, setCoCurricularData] = useState([
     { activity: 'Coding Club', position: 'Member', year: '2023' },
     { activity: 'Basketball Team', position: 'Captain', year: '2022' },
   ]);
 
+  // ── Fetch student data ─────────────────────────────────────────────────────
   useEffect(() => {
-    let year = parseInt(studentData.batch);
-    let currentYear = new Date().getFullYear();
-    let month = new Date().getMonth() + 1;
-    if (month >= 7) currentYear += 1; 
-    setStudentData((prev) => ({
-      ...prev,
-      currentSemester: (currentYear - year) * 2 + (month < 7 ? 0 : 1)
-    }));
-  }, []);
-  // ── Helpers ─────────────────────────────────────────────────────────────────
+    if (!rollNo) return;
+    const fetchStudentData = async () => {
+      try {
+        const response = await fetch(`http://localhost:8080/api/student/details/${rollNo}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        setStudentData(data);
+      } catch (error) {
+        console.error('Error fetching student data:', error);
+      }
+    };
+    fetchStudentData();
+  }, [rollNo]);
 
-  // Convenience setter that deep-merges a patch into studentData
+  // ── Compute current semester once studentData is ready ────────────────────
+ useEffect(() => {
+  if (!studentData) return;
+
+  const batchYear = parseInt(studentData.batch);
+  const now       = new Date();
+  const year      = now.getFullYear();
+  const month     = now.getMonth() + 1; // 1–12
+
+    const academicYearsCompleted = month >= 7
+    ? year - batchYear          // Jul–Dec: in the (year - batchYear + 1)th year
+    : year - batchYear - 1;     // Jan–Jun: still in previous academic year
+
+  
+  const isOddSemester = month >= 7 && month <= 11;
+
+  const sem = academicYearsCompleted * 2 + (isOddSemester ? 1 : 2);
+
+  setCurrentSemester(Math.max(1, sem)); // clamp to at least 1
+}, [studentData]);
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
   const updateStudentData = (patch) =>
     setStudentData((prev) => ({ ...prev, ...patch }));
 
-  // Convenience setter specifically for courses (keeps other studentData intact)
-  const setCourses = (coursesOrUpdater) =>
-    setStudentData((prev) => ({
-      ...prev,
-      courses:
-        typeof coursesOrUpdater === 'function'
-          ? coursesOrUpdater(prev.courses)
-          : coursesOrUpdater,
-    }));
+ const setCourses = (coursesOrUpdater) => {
+  if (typeof coursesOrUpdater === 'function') {
+    setCourseDetails(prev => coursesOrUpdater(prev)); // ← passes full { core, elective }
+  } else {
+    setCourseDetails(coursesOrUpdater); // ← direct replacement
+  }
+};
 
   const getGradePoint = (grade) => {
     const gradeMap = { S: 10, A: 9, B: 8, C: 7, D: 6, E: 5 };
@@ -91,12 +82,8 @@ const StudentDashboard = () => {
   };
 
   const calculateGPAData = () => {
-    const allCourses = [
-      ...studentData.courses.core,
-      ...studentData.courses.elective,
-    ];
+    const allCourses = [...courseDetails.core, ...courseDetails.elective];
     const semesterData = {};
-
     allCourses.forEach((course) => {
       if (!semesterData[course.semester])
         semesterData[course.semester] = { totalPoints: 0, totalCredits: 0 };
@@ -105,35 +92,26 @@ const StudentDashboard = () => {
       semesterData[course.semester].totalCredits += course.credits;
     });
 
-    let cumulativePoints = 0;
-    let cumulativeCredits = 0;
+    let cumulativePoints = 0, cumulativeCredits = 0;
     const gpaData = [];
-
-    Object.keys(semesterData)
-      .sort((a, b) => a - b)
-      .forEach((sem) => {
-        const { totalPoints, totalCredits } = semesterData[sem];
-        const sgpa = totalCredits > 0 ? totalPoints / totalCredits : 0;
-        cumulativePoints  += totalPoints;
-        cumulativeCredits += totalCredits;
-        const cgpa = cumulativeCredits > 0 ? cumulativePoints / cumulativeCredits : 0;
-        gpaData.push({
-          semester: parseInt(sem),
-          sgpa: parseFloat(sgpa.toFixed(2)),
-          cgpa: parseFloat(cgpa.toFixed(2)),
-        });
+    Object.keys(semesterData).sort((a, b) => a - b).forEach((sem) => {
+      const { totalPoints, totalCredits } = semesterData[sem];
+      const sgpa = totalCredits > 0 ? totalPoints / totalCredits : 0;
+      cumulativePoints  += totalPoints;
+      cumulativeCredits += totalCredits;
+      const cgpa = cumulativeCredits > 0 ? cumulativePoints / cumulativeCredits : 0;
+      gpaData.push({
+        semester: parseInt(sem),
+        sgpa: parseFloat(sgpa.toFixed(2)),
+        cgpa: parseFloat(cgpa.toFixed(2)),
       });
-
+    });
     return gpaData;
   };
 
   const calculateCurrentCGPA = () => {
-    const allCourses = [
-      ...studentData.courses.core,
-      ...studentData.courses.elective,
-    ];
-    let totalPoints = 0;
-    let totalCredits = 0;
+    const allCourses = [...courseDetails.core, ...courseDetails.elective];
+    let totalPoints = 0, totalCredits = 0;
     allCourses.forEach((c) => {
       totalPoints  += getGradePoint(c.grade) * c.credits;
       totalCredits += c.credits;
@@ -141,10 +119,10 @@ const StudentDashboard = () => {
     return totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : '0.00';
   };
 
-  const gpaData    = calculateGPAData();
+  const gpaData     = calculateGPAData();
   const currentCGPA = calculateCurrentCGPA();
 
-  // ── Menu items (unchanged) ───────────────────────────────────────────────────
+  // ── Sidebar menu ───────────────────────────────────────────────────────────
   const menuItems = [
     {
       id: 'overview', name: 'Overview',
@@ -172,79 +150,103 @@ const StudentDashboard = () => {
     },
   ];
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  // ── Loading screen ─────────────────────────────────────────────────────────
+  if (!studentData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-purple-900 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+          <p className="text-white text-lg font-semibold animate-pulse">Loading Student Portal…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Verification status helper ─────────────────────────────────────────────
+  const verifLabel =
+    studentData.verificationStatus === true  ? 'Verified'  :
+    studentData.verificationStatus === false ? 'Pending'   :
+    String(studentData.verificationStatus ?? 'Pending');
+
+  const verifColorClass =
+    verifLabel === 'Verified' || verifLabel === 'approved' ? 'text-green-400' :
+    verifLabel === 'rejected'                              ? 'text-red-400'   :
+                                                             'text-yellow-400';
+
+  // ── renderContent ──────────────────────────────────────────────────────────
   const renderContent = () => {
     switch (activeView) {
+
       case 'overview':
         return (
           <div className="space-y-6">
-            <div>
-                <PersonalDetailsSection
-            studentData={studentData}
-            setStudentData={updateStudentData}
-            verificationStatus={studentData.personalVerificationStatus}
-            edit = {false}
-            showAll = {false}
-          />
-            </div>
+            <PersonalDetailsSection
+              studentData={studentData}
+              setStudentData={updateStudentData}
+              verificationStatus={studentData.personalVerificationStatus}
+              edit={false}
+              showAll={false}
+              currentSemester={currentSemester}
+            />
+
+            {/* Stats cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* CGPA card */}
+              {/* CGPA */}
               <div className="bg-white rounded-2xl shadow-xl p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-gray-900">Current CGPA</h3>
                   <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                    <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
                   </div>
                 </div>
                 <p className="text-4xl font-bold text-indigo-600">{currentCGPA}</p>
                 <p className="text-sm text-gray-500 mt-2">Out of 10.00</p>
               </div>
 
-              {/* Courses card */}
+              {/* Courses */}
               <div className="bg-white rounded-2xl shadow-xl p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-gray-900">Total Courses</h3>
                   <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
                   </div>
                 </div>
                 <p className="text-4xl font-bold text-purple-600">
-                  {studentData.courses.core.length + studentData.courses.elective.length}
+                  {courseDetails.core.length + courseDetails.elective.length}
                 </p>
                 <p className="text-sm text-gray-500 mt-2">
-                  {studentData.courses.core.length} Core, {studentData.courses.elective.length} Elective
+                  {courseDetails.core.length} Core, {courseDetails.elective.length} Elective
                 </p>
               </div>
 
-              {/* Verification card */}
+              {/* Verification */}
               <div className="bg-white rounded-2xl shadow-xl p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-gray-900">Verification</h3>
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                    studentData.verificationStatus === 'pending'  ? 'bg-yellow-100' :
-                    studentData.verificationStatus === 'approved' ? 'bg-green-100'  : 'bg-red-100'
+                    verifLabel === 'Pending'  ? 'bg-yellow-100' :
+                    verifLabel === 'Verified' || verifLabel === 'approved' ? 'bg-green-100' : 'bg-red-100'
                   }`}>
-                    <svg className={`w-6 h-6 ${
-                      studentData.verificationStatus === 'pending'  ? 'text-yellow-600' :
-                      studentData.verificationStatus === 'approved' ? 'text-green-600'  : 'text-red-600'
-                    }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className={`w-6 h-6 ${verifColorClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 capitalize">
-                  {studentData.verificationStatus}
-                </p>
+                <p className="text-2xl font-bold text-gray-900 capitalize">{verifLabel}</p>
                 <p className="text-sm text-gray-500 mt-2">Data verification status</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <CourseGradesSection
-                courses={studentData.courses}
+                courses={courseDetails}
                 setCourses={setCourses}
                 getGradePoint={getGradePoint}
-                showSemester={studentData.currentSemester - 1}
+                showSemester={currentSemester ? currentSemester - 1 : 'all'}
               />
               <CGPATrackerGraph gpaData={gpaData} currentCGPA={currentCGPA} />
             </div>
@@ -257,15 +259,16 @@ const StudentDashboard = () => {
             studentData={studentData}
             setStudentData={updateStudentData}
             verificationStatus={studentData.personalVerificationStatus}
-            edit = {true}
-            showAll = {true}
+            edit={true}
+            showAll={true}
+            currentSemester={currentSemester}
           />
         );
 
       case 'grades':
         return (
           <CourseGradesSection
-            courses={studentData.courses}
+            courses={courseDetails}
             setCourses={setCourses}
             getGradePoint={getGradePoint}
             showSemester="all"
@@ -276,7 +279,7 @@ const StudentDashboard = () => {
         return (
           <TargetCGPACalculator
             currentCGPA={parseFloat(currentCGPA)}
-            courses={studentData.courses}
+            courses={courseDetails}
             getGradePoint={getGradePoint}
           />
         );
@@ -285,16 +288,18 @@ const StudentDashboard = () => {
         return <CoCurricularActivities />;
 
       case 'attendance':
-        return <AttendanceTracker courses={studentData.courses} />;
+        return <AttendanceTracker courses={courseDetails} />;
 
       default:
         return null;
     }
   };
 
+  // ── Full render ────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-purple-900 flex">
-      {/* ── Sidebar ── */}
+
+      {/* Sidebar */}
       <aside className={`
         ${isSidebarOpen ? 'w-64' : 'w-20'}
         bg-white/10 backdrop-blur-md border-r border-white/20
@@ -304,7 +309,10 @@ const StudentDashboard = () => {
         <div className="p-6 border-b border-white/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center" onClick={() => setIsSidebarOpen(true)}>
+              <div
+                className="w-10 h-10 bg-white rounded-xl flex items-center justify-center cursor-pointer"
+                onClick={() => setIsSidebarOpen(true)}
+              >
                 <span className="text-indigo-600 font-bold text-lg">A</span>
               </div>
               {isSidebarOpen && (
@@ -316,10 +324,11 @@ const StudentDashboard = () => {
             </div>
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="text-white hover:bg-white/10 p-2 rounded-lg transition-colors lg:block hidden"
+              className="text-white hover:bg-white/10 p-2 rounded-lg transition-colors hidden lg:block"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isSidebarOpen ? "M11 19l-7-7 7-7m8 14l-7-7 7-7" : ""} />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d={isSidebarOpen ? "M11 19l-7-7 7-7m8 14l-7-7 7-7" : "M13 5l7 7-7 7M5 5l7 7-7 7"} />
               </svg>
             </button>
           </div>
@@ -328,13 +337,13 @@ const StudentDashboard = () => {
         {isSidebarOpen && (
           <div className="p-6 border-b border-white/20">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                {studentData.name.charAt(0)}
+              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                {studentData.name?.charAt(0) ?? '?'}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white font-semibold truncate">{studentData.name}</p>
-                <p className="text-indigo-200 text-sm truncate">{studentData.rollNumber}</p>
-                <p className="text-indigo-300 text-xs capitalize">{studentData.batchType} batch</p>
+                <p className="text-indigo-200 text-sm truncate">{studentData.rollNo}</p>
+                <p className="text-indigo-300 text-xs">{studentData.program} · {studentData.batch}</p>
               </div>
             </div>
           </div>
@@ -350,7 +359,7 @@ const StudentDashboard = () => {
                     w-full flex items-center gap-3 px-4 py-3 rounded-xl
                     transition-all duration-200
                     ${activeView === item.id ? 'bg-white text-indigo-700 shadow-lg' : 'text-white hover:bg-white/10'}
-                    ${!isSidebarOpen && 'justify-center'}
+                    ${!isSidebarOpen ? 'justify-center' : ''}
                   `}
                   title={!isSidebarOpen ? item.name : ''}
                 >
@@ -365,40 +374,41 @@ const StudentDashboard = () => {
         {isSidebarOpen && (
           <div className="p-4 border-t border-white/20">
             <button className="w-full flex items-center gap-3 px-4 py-3 text-white hover:bg-white/10 rounded-xl transition-colors">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
               <span className="font-medium">Logout</span>
             </button>
           </div>
         )}
       </aside>
 
+      {/* Mobile overlay */}
       {isSidebarOpen && (
         <div className="lg:hidden fixed inset-0 bg-black/50 z-30" onClick={() => setIsSidebarOpen(false)} />
       )}
 
-      {/* ── Main ── */}
+      {/* Main content */}
       <main className="flex-1 p-6 overflow-auto">
-        <div className="lg:hidden mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-xl" />
-            <h1 className="text-white text-xl font-bold">AMS</h1>
-          </div>
+        <div className="lg:hidden mb-6 flex items-center gap-3">
+          <div className="w-10 h-10 bg-white rounded-xl" />
+          <h1 className="text-white text-xl font-bold">AMS</h1>
         </div>
 
         <div className="mb-8">
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
             <h2 className="text-white text-3xl font-bold mb-2">
-              {menuItems.find((item) => item.id === activeView)?.name || 'Dashboard'}
+              {menuItems.find((item) => item.id === activeView)?.name ?? 'Dashboard'}
             </h2>
             <p className="text-indigo-200">Track. Verify. Grow.</p>
           </div>
         </div>
 
-        <div className="animate-fade-in">{renderContent()}</div>
+        <div>{renderContent()}</div>
       </main>
 
       <AcademicChatbot
-        courses={studentData.courses}
+        courses={studentData.courses ?? courseDetails}
         studentData={studentData}
         currentCGPA={currentCGPA}
         getGradePoint={getGradePoint}

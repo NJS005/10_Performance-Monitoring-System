@@ -407,7 +407,11 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
   const [autoFillFlash, setAutoFillFlash] = useState([]); // course codes that were just updated/added
 
   const getAllSemesters = () => {
-    const allCourses = [...courses.core, ...courses.elective];
+    // 1. Add safe fallbacks using the ? operator and || []
+    const safeCore = courses?.core || [];
+    const safeElective = courses?.elective || [];
+    
+    const allCourses = [...safeCore, ...safeElective];
     return [...new Set(allCourses.map((c) => c.semester))].sort((a, b) => a - b);
   };
   const allSemesters = getAllSemesters();
@@ -421,18 +425,22 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
   }, [showSemester, JSON.stringify(allSemesters)]);
 
   const filterCoursesBySemester = (coursesData, semester) => {
+    // Safe fallbacks here as well
+    const safeCore = coursesData?.core || [];
+    const safeElective = coursesData?.elective || [];
+
     if (showSemester === 'all' && semester) {
       return {
-        core:     coursesData.core.filter((c) => c.semester === semester),
-        elective: coursesData.elective.filter((c) => c.semester === semester),
+        core:     safeCore.filter((c) => c.semester === semester),
+        elective: safeElective.filter((c) => c.semester === semester),
       };
     } else if (typeof showSemester === 'number') {
       return {
-        core:     coursesData.core.filter((c) => c.semester === showSemester),
-        elective: coursesData.elective.filter((c) => c.semester === showSemester),
+        core:     safeCore.filter((c) => c.semester === showSemester),
+        elective: safeElective.filter((c) => c.semester === showSemester),
       };
     }
-    return coursesData;
+    return { core: safeCore, elective: safeElective };
   };
 
   const handleEdit = () => {
@@ -456,10 +464,12 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
     const pdfSemester = parsedData.semester ? parseInt(parsedData.semester) : null;
 
     setCourses((prevCourses) => {
-      let newCore = [...prevCourses.core];
-      let newElective = [...prevCourses.elective];
+    
+      let newCore = [...prevCourses?.core || []];
+      let newElective = [...prevCourses?.elective || []];
 
-      const allExisting = [...newCore, ...newElective];
+     
+  const allExisting = [...(courses?.core || []), ...(courses?.elective || [])];
       let maxId = allExisting.reduce((max, c) => Math.max(max, c.id), 0);
 
       mappings.forEach((m) => {
