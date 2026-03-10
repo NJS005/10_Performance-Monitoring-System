@@ -17,6 +17,9 @@ const StudentDashboard = () => {
   const [studentData, setStudentData] = useState(null);   // ← null, not undefined
   const [currentSemester, setCurrentSemester] = useState(null);
 
+
+  
+
   const [courseDetails, setCourseDetails] = useState({
     core: [],
     elective: [],
@@ -43,7 +46,47 @@ const StudentDashboard = () => {
     fetchStudentData();
   }, [rollNo]);
 
-  // ── Compute current semester once studentData is ready ────────────────────
+  useEffect(() => {
+    if(!studentData) return;
+    const fetchCourseDetails = async () => {
+      try {
+        const response = await fetch(`http://localhost:8080/api/student/courses/${rollNo}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        console.log("Fetched course details:", data);
+        const core = data.filter(c => c.courseType === 'PC' || c.courseType === 'IC').map(c => ({
+          name: c.courseName,
+          code:c.courseCode,
+          grade: c.grade,
+          credits: c.credit,
+          semester: c.semester,
+          category: c.courseType,
+        }));
+        const elective = data.filter(c => c.courseType === 'EI' || c.courseType === 'OE'|| c.courseType === 'HM'|| c.courseType === 'DA'|| c.courseType === 'AC'|| c.courseType === 'PE').map(c => ({
+          name: c.courseName,
+          code: c.courseCode,
+          grade: c.grade,
+          credits: parseInt(c.credit),
+          semester: c.semester,
+          category: c.courseType,
+        }));
+        
+        setCourseDetails({ core: core, elective: elective });
+       
+      } catch (error) {
+        console.error('Error fetching course details:', error);
+      }
+    };
+    fetchCourseDetails();
+  }, [rollNo, studentData]);
+
+// Add this right below your other useEffects
+  useEffect(() => {
+    // console.log("THE REAL STATE IS NOW:", courseDetails);
+  }, [courseDetails]); // This tells React: "Run this log EVERY time courseDetails officially changes!"
+
+  // ── C
+  // ompute current semester once studentData is ready ────────────────────
  useEffect(() => {
   if (!studentData) return;
 
@@ -247,6 +290,7 @@ const StudentDashboard = () => {
                 setCourses={setCourses}
                 getGradePoint={getGradePoint}
                 showSemester={currentSemester ? currentSemester - 1 : 'all'}
+                rollNo = {rollNo}
               />
               <CGPATrackerGraph gpaData={gpaData} currentCGPA={currentCGPA} />
             </div>
@@ -272,6 +316,7 @@ const StudentDashboard = () => {
             setCourses={setCourses}
             getGradePoint={getGradePoint}
             showSemester="all"
+            rollNo={rollNo}
           />
         );
 
