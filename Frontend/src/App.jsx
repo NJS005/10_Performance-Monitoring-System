@@ -51,9 +51,9 @@ export default function App() {
           <Route 
             path="/faculty/*" 
             element={
-              <ProtectedRoute allowedRole="Faculty Advisor">
+              
                 <FacultyLayout />
-              </ProtectedRoute>
+              
             }
           >
             <Route path="*" element={<FacultyRoutes />} />
