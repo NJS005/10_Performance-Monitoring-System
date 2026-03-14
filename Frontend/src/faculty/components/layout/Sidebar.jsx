@@ -33,6 +33,16 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     }
   ];
 
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userName = user?.name?.toUpperCase() || "Faculty Advisor";
+  const displayName = userName.toLowerCase().startsWith("dr") ? userName : `Dr. ${userName}`;
+  const initials = userName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0].toUpperCase())
+    .join("");
+
   return (
     <div className={`
       fixed left-0 top-0 h-full bg-gradient-to-b from-slate-800 to-slate-700
@@ -93,8 +103,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           </div>
           {isOpen && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">Dr. Faculty Advisor</p>
-              <p className="text-xs text-slate-400 truncate">faculty@university.edu</p>
+              <p className="text-sm font-medium text-white truncate">{displayName}</p>
+              <p className="text-xs text-slate-400 truncate">{user?.email || 'faculty@university.edu'}</p>
             </div>
           )}
         </div>

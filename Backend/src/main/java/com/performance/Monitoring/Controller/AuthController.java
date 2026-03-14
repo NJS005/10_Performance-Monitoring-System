@@ -53,12 +53,15 @@ public class AuthController {
                     return ResponseEntity.status(403).body("Must use @nitc.ac.in email");
                 }
 
-                // Check if faculty email exists in faculty table
-                if ("faculty".equals(requestedRole)) {
+                boolean isFaculty = requestedRole != null && requestedRole.toLowerCase().contains("faculty");
+
+                String facultyName = null;
+                if (isFaculty) {
                     Optional<Faculty> faculty = facultyRepository.findByEmail(email);
                     if (faculty.isEmpty()) {
                         return ResponseEntity.status(403).body("Faculty email not found in faculty records");
                     }
+                    facultyName = faculty.get().getName();
                 }
 
                 Optional<User> existingUser = userRepository.findByEmail(email);
@@ -66,6 +69,10 @@ public class AuthController {
                 
                 if (existingUser.isPresent()) {
                     user = existingUser.get();
+                    if (isFaculty && facultyName != null && !facultyName.equals(user.getName())) {
+                        user.setName(facultyName);
+                        userRepository.save(user);
+                    }
                     return ResponseEntity.ok(Map.of(
                             "Existing User", "Login successful",
                             "user", user,
@@ -76,7 +83,7 @@ public class AuthController {
 
                     user = new User();
                     user.setEmail(email);
-                    user.setName((String) payload.get("name"));
+                    user.setName(isFaculty && facultyName != null ? facultyName : (String) payload.get("name"));
                     user.setPictureUrl((String) payload.get("picture"));
                     user.setRole(requestedRole);
                     userRepository.save(user);
