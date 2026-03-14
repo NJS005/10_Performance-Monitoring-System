@@ -5,7 +5,9 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.performance.Monitoring.Modal.User;
+import com.performance.Monitoring.Modal.Faculty;
 import com.performance.Monitoring.Repo.UserRepo;
+import com.performance.Monitoring.Repo.FacultyRepo;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +25,8 @@ public class AuthController {
     @Autowired
     private UserRepo userRepository;
 
-    
+    @Autowired
+    private FacultyRepo facultyRepository;
 
 
     private static final String CLIENT_ID = "750796996880-c4875choh43f78urk1d5gt06orqln9q1.apps.googleusercontent.com";
@@ -50,6 +53,13 @@ public class AuthController {
                     return ResponseEntity.status(403).body("Must use @nitc.ac.in email");
                 }
 
+                // Check if faculty email exists in faculty table
+                if ("faculty".equals(requestedRole)) {
+                    Optional<Faculty> faculty = facultyRepository.findByEmail(email);
+                    if (faculty.isEmpty()) {
+                        return ResponseEntity.status(403).body("Faculty email not found in faculty records");
+                    }
+                }
 
                 Optional<User> existingUser = userRepository.findByEmail(email);
                 User user;

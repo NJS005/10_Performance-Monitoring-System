@@ -26,11 +26,11 @@ const FacultyDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-6 text-white">
+      <div className="bg-indigo-600 rounded-xl p-6 text-white">
         <h1 className="text-2xl font-bold mb-2">Good afternoon, Dr. Faculty Advisor</h1>
         <p className="text-indigo-100">
           You have <span className="font-semibold">{stats?.pending || 0} pending reviews</span>
-          {stats?.pending > 5 && <span className="ml-2">• <span className="text-amber-300">3 urgent</span></span>}
+          {stats?.pending > 5 && <span className="ml-2">• <span className="text-amber-200">3 urgent</span></span>}
         </p>
       </div>
 

@@ -40,7 +40,9 @@ export default function App() {
             path="/admin" 
             element={
               <ProtectedRoute allowedRole="Admin">
-                <AdminLayout />
+                <AdminLayout >
+                  <AdminDashboard />
+                </AdminLayout>
               </ProtectedRoute>
             }
           >
@@ -51,8 +53,9 @@ export default function App() {
           <Route 
             path="/faculty/*" 
             element={
-              
+              //<ProtectedRoute allowedRole="Faculty Advisor">
                 <FacultyLayout />
+              //</ProtectedRoute>
               
             }
           >

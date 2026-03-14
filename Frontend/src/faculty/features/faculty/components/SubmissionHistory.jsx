@@ -37,14 +37,14 @@ const SubmissionHistory = ({ student }) => {
   }
 
   const colorClasses = {
-    blue: 'bg-blue-100 text-blue-600',
-    green: 'bg-emerald-100 text-emerald-600',
-    red: 'bg-rose-100 text-rose-600'
+    blue: 'bg-blue-50 text-blue-600',
+    green: 'bg-emerald-50 text-emerald-600',
+    red: 'bg-rose-50 text-rose-600'
   };
 
   return (
     <Card className="p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Submission Timeline</h2>
+      <h2 className="text-lg font-semibold text-slate-900 mb-4">Submission Timeline</h2>
       
       <div className="flow-root">
         <ul className="-mb-8">
@@ -53,7 +53,7 @@ const SubmissionHistory = ({ student }) => {
               <div className="relative pb-8">
                 {eventIdx !== history.length - 1 && (
                   <span
-                    className="absolute top-5 left-5 -ml-px h-full w-0.5 bg-gray-200"
+                    className="absolute top-5 left-5 -ml-px h-full w-0.5 bg-slate-200"
                     aria-hidden="true"
                   />
                 )}
@@ -64,9 +64,9 @@ const SubmissionHistory = ({ student }) => {
                   <div className="min-w-0 flex-1">
                     <div>
                       <div className="text-sm">
-                        <span className="font-medium text-gray-900">{event.action}</span>
+                        <span className="font-medium text-slate-900">{event.action}</span>
                       </div>
-                      <p className="mt-0.5 text-sm text-gray-500">
+                      <p className="mt-0.5 text-sm text-slate-500">
                         {new Date(event.date).toLocaleDateString('en-US', {
                           month: 'long',
                           day: 'numeric',
@@ -76,7 +76,7 @@ const SubmissionHistory = ({ student }) => {
                         })}
                       </p>
                     </div>
-                    <div className="mt-2 text-sm text-gray-700">
+                    <div className="mt-2 text-sm text-slate-700">
                       <p>{event.description}</p>
                     </div>
                   </div>

@@ -4,11 +4,11 @@ import { Button } from '../../../components/ui/Button';
 
 const ApprovalActions = ({ onApprove, onReject, isLoading }) => {
   return (
-    <Card className="p-6 bg-gradient-to-r from-gray-50 to-indigo-50 border-2 border-indigo-100">
+    <Card className="p-6 bg-indigo-50 border-2 border-indigo-200">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Ready to Review?</h3>
-          <p className="text-sm text-gray-600 mt-1">
+          <h3 className="text-lg font-semibold text-slate-900">Ready to Review?</h3>
+          <p className="text-sm text-slate-600 mt-1">
             Approve this submission or reject with detailed remarks
           </p>
         </div>

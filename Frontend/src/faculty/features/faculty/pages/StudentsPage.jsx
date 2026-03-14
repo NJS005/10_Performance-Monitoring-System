@@ -49,12 +49,12 @@ const StudentsPage = () => {
         header: 'Student',
         cell: ({ row }) => (
           <div className="flex items-center">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center text-white font-semibold text-sm">
+            <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold text-sm">
               {row.original.avatar}
             </div>
             <div className="ml-4">
-              <div className="text-sm font-medium text-gray-900">{row.original.name}</div>
-              <div className="text-sm text-gray-500">{row.original.rollNumber}</div>
+              <div className="text-sm font-medium text-slate-900">{row.original.name}</div>
+              <div className="text-sm text-slate-500">{row.original.rollNumber}</div>
             </div>
           </div>
         )
@@ -64,8 +64,8 @@ const StudentsPage = () => {
         header: 'Program',
         cell: ({ row }) => (
           <div>
-            <div className="text-sm text-gray-900">{row.original.program}</div>
-            <div className="text-sm text-gray-500">{row.original.department}</div>
+            <div className="text-sm text-slate-900">{row.original.program}</div>
+            <div className="text-sm text-slate-500">{row.original.department}</div>
           </div>
         )
       },
@@ -73,7 +73,7 @@ const StudentsPage = () => {
         accessorKey: 'semester',
         header: 'Semester',
         cell: ({ getValue }) => (
-          <span className="text-sm text-gray-900">Sem {getValue()}</span>
+          <span className="text-sm text-slate-900">Sem {getValue()}</span>
         )
       },
       {
