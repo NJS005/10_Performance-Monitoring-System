@@ -8,7 +8,14 @@ package com.performance.Monitoring.Modal;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "student")
+@Table(name = "student",
+        uniqueConstraints = {
+        @UniqueConstraint(
+            name = "unique_student_course_verification",
+            columnNames = {"roll_no", "semester"}
+        )
+        }
+)
 
 public class Student {
 

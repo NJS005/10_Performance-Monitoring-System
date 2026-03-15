@@ -25,10 +25,7 @@ const StudentDashboard = () => {
     elective: [],
   });
 
-  const [coCurricularData, setCoCurricularData] = useState([
-    { activity: 'Coding Club', position: 'Member', year: '2023' },
-    { activity: 'Basketball Team', position: 'Captain', year: '2022' },
-  ]);
+ 
 
   // ── Fetch student data ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -330,7 +327,7 @@ const StudentDashboard = () => {
         );
 
       case 'cocurricular':
-        return <CoCurricularActivities />;
+        return <CoCurricularActivities rollNo={rollNo} />;
 
       case 'attendance':
         return <AttendanceTracker courses={courseDetails} />;

@@ -4,7 +4,14 @@ import jakarta.persistence.*;
 
 
 @Entity
-@Table(name = "course_verification")
+@Table(name = "course_verification",
+        uniqueConstraints = {
+        @UniqueConstraint(
+            name = "unique_student_course_verification",
+            columnNames = {"roll_no", "semester"}
+        )
+    }
+)
 public class CourseVerification {
 
     @Id
@@ -14,6 +21,8 @@ public class CourseVerification {
     private String rollNo;
     private int semester;
     private String verificationStatus;
+
+    @Lob
     private byte[] document;
 
     public CourseVerification() {
