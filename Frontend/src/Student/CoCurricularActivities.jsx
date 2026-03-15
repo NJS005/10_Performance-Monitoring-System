@@ -1,27 +1,22 @@
 import React, { useState } from 'react';
 
+export const CoCurricularActivities = ({ rollNo }) => {
+  const [activities, setActivities] = useState([]);
 
-export const CoCurricularActivities = () => {
-  const [activities, setActivities] = useState([
-    {
-      id: 1,
-      title: 'IEEE Student Chapter - Core Member',
-      description: 'Actively participated in organizing technical workshops and coding competitions. Led a team of 5 members in the annual tech fest.',
-      type: 'club',
-      certificate: null,
-      certificateName: '',
-      date: '2024-01-15'
-    },
-    {
-      id: 2,
-      title: 'Smart India Hackathon 2024',
-      description: 'Developed an AI-powered solution for traffic management. Our team secured 2nd position at the national level.',
-      type: 'competition',
-      certificate: null,
-      certificateName: 'SIH_Certificate.pdf',
-      date: '2024-03-20'
+  React.useEffect(() => {
+    // Fetch existing activities from backend
+    const fetchActivities = async () => {
+      try {
+        const response = await fetch(`http://localhost:8080/api/student/cocurricular/${rollNo}`);
+        const data = await response.json();
+        setActivities(data);
+      }
+      catch (error) {
+        console.error('Error fetching activities:', error);
+      }
     }
-  ]);
+    fetchActivities();
+  }, [rollNo]);
 
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -99,6 +94,45 @@ export const CoCurricularActivities = () => {
     resetForm();
   };
 
+  const handleSubmit = async () => {
+    const fd = new FormData();
+
+    // Loop through your array and append each property with an index
+    activities.forEach((item, index) => {
+      fd.append(`activities[${index}].rollNo`, rollNo);
+      fd.append(`activities[${index}].title`, item.title);
+      fd.append(`activities[${index}].description`, item.description);
+      fd.append(`activities[${index}].type`, item.type);
+      fd.append(`activities[${index}].certificateName`, item.certificateName);
+      fd.append(`activities[${index}].date`, item.date);
+
+      // Append the actual file object ONLY if it's a new File, not a fetched Base64 string
+      if (item.certificate && item.certificate instanceof File) {
+        fd.append(`activities[${index}].certificate`, item.certificate);
+      }
+    });
+
+    console.log('Submitting activities via FormData');
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/student/cocurricular/${rollNo}`, {
+        method: 'POST',
+        body: fd 
+      });
+
+      if (!response.ok) {
+        throw new Error(`Submission failed: ${response.status}`);
+      }
+
+      console.log('Successfully submitted!');
+      alert('Activities submitted successfully!');
+
+    } catch (error) {
+      console.error('Error submitting activities:', error);
+      alert('Failed to submit activities. Please try again.');
+    }
+  };
+
   // Start editing an activity
   const handleEditActivity = (activity) => {
     setEditingId(activity.id);
@@ -147,6 +181,33 @@ export const CoCurricularActivities = () => {
     });
     setIsAdding(false);
     setEditingId(null);
+  };
+
+  // Helper to open the Base64 file in a new tab
+  const handleViewCertificate = (certificateBase64, fileName) => {
+    if (!certificateBase64 || typeof certificateBase64 !== 'string') {
+      alert("Please submit the activity first to view the certificate.");
+      return;
+    }
+
+    try {
+      const isPdf = fileName && fileName.toLowerCase().endsWith('.pdf');
+      const mimeType = isPdf ? 'application/pdf' : 'image/jpeg';
+      
+      const byteCharacters = atob(certificateBase64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: mimeType });
+
+      const fileUrl = URL.createObjectURL(blob);
+      window.open(fileUrl, '_blank');
+    } catch (error) {
+      console.error("Error displaying certificate:", error);
+      alert("Could not load the certificate file.");
+    }
   };
 
   // Color classes for activity types
@@ -301,7 +362,7 @@ export const CoCurricularActivities = () => {
                     </svg>
                     <div>
                       <p className="font-semibold text-gray-900">{formData.certificateName}</p>
-                      <p className="text-xs text-gray-500">Certificate uploaded</p>
+                      <p className="text-xs text-gray-500">Certificate selected</p>
                     </div>
                   </div>
                   <button
@@ -405,13 +466,25 @@ export const CoCurricularActivities = () => {
                 {/* Description */}
                 <p className="text-gray-700 mb-4 leading-relaxed">{activity.description}</p>
 
-                {/* Certificate Badge */}
+                {/* Certificate Badge & View Button */}
                 {activity.certificateName && (
-                  <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 px-4 py-2 rounded-lg border border-green-200 w-fit">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="font-medium">Certificate: {activity.certificateName}</span>
+                  <div className="flex items-center gap-4 mt-4">
+                    <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 px-4 py-2 rounded-lg border border-green-200 w-fit">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="font-medium">Certificate: {activity.certificateName}</span>
+                    </div>
+                    
+                    {/* Only show "View" if it's a fetched string from the DB, not a pending File upload */}
+                    {typeof activity.certificate === 'string' && (
+                      <button
+                        onClick={() => handleViewCertificate(activity.certificate, activity.certificateName)}
+                        className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 underline transition-colors"
+                      >
+                        View Document
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -423,7 +496,8 @@ export const CoCurricularActivities = () => {
       {/* Submit Button */}
       {activities.length > 0 && (
         <div className="mt-8 pt-6 border-t border-gray-200">
-          <button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3 rounded-lg font-bold transition-all duration-200 transform hover:scale-[1.02] shadow-lg">
+          <button onClick={handleSubmit} 
+          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3 rounded-lg font-bold transition-all duration-200 transform hover:scale-[1.02] shadow-lg">
             Submit All Activities for Verification
           </button>
         </div>

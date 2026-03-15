@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,8 +14,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import com.performance.Monitoring.Modal.Student;
 import com.performance.Monitoring.Service.StudentService;
+import com.performance.Monitoring.dto.CoCurricularFormWrapper;
+import org.springframework.http.MediaType;
+
+
 import org.springframework.web.bind.annotation.PathVariable;
 import com.performance.Monitoring.Modal.Courses;
+// import com.performance.Monitoring.Modal.CoCurricular;
 
 @RestController
 @RequestMapping("/api/student")
@@ -52,4 +58,22 @@ public class StudentController {
         studentService.addStudentCourses(rollNumber, courses);
         return ResponseEntity.ok("Course added successfully");
     }
+
+    @GetMapping("/cocurricular/{rollNumber}")
+public ResponseEntity<?> getStudentCoCurricular(@PathVariable String rollNumber) {
+    List<?> coCurriculars = studentService.getStudentCoCurricular(rollNumber);
+    return ResponseEntity.ok(coCurriculars);
+}
+
+// Specify that this consumes MULTIPART_FORM_DATA
+    @PostMapping(value = "/cocurricular/{rollNumber}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        public ResponseEntity<String> addStudentCoCurricular(
+        @PathVariable String rollNumber, 
+        @ModelAttribute CoCurricularFormWrapper wrapper) { // Use @ModelAttribute!
+    
+    // Pass the list of DTOs to the service
+    studentService.addStudentCoCurricular(rollNumber, wrapper.getActivities());
+    
+    return ResponseEntity.ok("Co-curricular activity added successfully");
+}
 }
