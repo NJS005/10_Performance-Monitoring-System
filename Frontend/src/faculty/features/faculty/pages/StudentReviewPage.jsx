@@ -49,7 +49,7 @@ const StudentReviewPage = () => {
   if (!student) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Student not found</p>
+        <p className="text-slate-500">Student not found</p>
       </div>
     );
   }
@@ -70,8 +70,8 @@ const StudentReviewPage = () => {
             Back
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Review Submission</h1>
-            <p className="mt-1 text-sm text-gray-500">Academic performance verification</p>
+            <h1 className="text-2xl font-bold text-slate-900">Review Submission</h1>
+            <p className="mt-1 text-sm text-slate-500">Academic performance verification</p>
           </div>
         </div>
         <Badge status={student.status}>
@@ -84,31 +84,31 @@ const StudentReviewPage = () => {
 
       {/* Academic Details */}
       <Card className="p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Academic Performance</h2>
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">Academic Performance</h2>
         
         
 
         {/* Courses */}
         <div className="mb-6">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Course Performance</h3>
+          <h3 className="text-sm font-semibold text-slate-900 mb-3">Course Performance</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50">
+              <thead className="bg-slate-100">
                 <tr>
-                  <th className="px-4 py-2 text-left font-medium text-gray-700">Course Code</th>
-                  <th className="px-4 py-2 text-left font-medium text-gray-700">Course Name</th>
-                  <th className="px-4 py-2 text-center font-medium text-gray-700">Credits</th>
-                  <th className="px-4 py-2 text-center font-medium text-gray-700">Marks</th>
-                  <th className="px-4 py-2 text-center font-medium text-gray-700">Grade</th>
+                  <th className="px-4 py-2 text-left font-medium text-slate-700">Course Code</th>
+                  <th className="px-4 py-2 text-left font-medium text-slate-700">Course Name</th>
+                  <th className="px-4 py-2 text-center font-medium text-slate-700">Credits</th>
+                  <th className="px-4 py-2 text-center font-medium text-slate-700">Marks</th>
+                  <th className="px-4 py-2 text-center font-medium text-slate-700">Grade</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-slate-200">
                 {student.academicData.courses.map((course, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">{course.code}</td>
-                    <td className="px-4 py-3 text-gray-700">{course.name}</td>
-                    <td className="px-4 py-3 text-center text-gray-700">{course.credits}</td>
-                    <td className="px-4 py-3 text-center font-medium text-gray-900">{course.marks}</td>
+                  <tr key={index} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 font-medium text-slate-900">{course.code}</td>
+                    <td className="px-4 py-3 text-slate-700">{course.name}</td>
+                    <td className="px-4 py-3 text-center text-slate-700">{course.credits}</td>
+                    <td className="px-4 py-3 text-center font-medium text-slate-900">{course.marks}</td>
                     <td className="px-4 py-3 text-center">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                         {course.grade}
@@ -124,14 +124,14 @@ const StudentReviewPage = () => {
         {/* Projects */}
         {student.academicData.projects && student.academicData.projects.length > 0 && (
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Projects</h3>
+            <h3 className="text-sm font-semibold text-slate-900 mb-3">Projects</h3>
             <div className="space-y-3">
               {student.academicData.projects.map((project, index) => (
-                <div key={index} className="bg-gray-50 rounded-lg p-4">
+                <div key={index} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h4 className="font-medium text-gray-900">{project.title}</h4>
-                      <p className="text-sm text-gray-600 mt-1">Guide: {project.guide}</p>
+                      <h4 className="font-medium text-slate-900">{project.title}</h4>
+                      <p className="text-sm text-slate-600 mt-1">Guide: {project.guide}</p>
                     </div>
                     <Badge status={project.status === 'Completed' ? 'approved' : 'pending'}>
                       {project.status}
@@ -146,12 +146,12 @@ const StudentReviewPage = () => {
         {/* Publications */}
         {student.academicData.publications && student.academicData.publications.length > 0 && (
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Publications</h3>
+            <h3 className="text-sm font-semibold text-slate-900 mb-3">Publications</h3>
             <div className="space-y-3">
               {student.academicData.publications.map((pub, index) => (
                 <div key={index} className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900">{pub.title}</h4>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <h4 className="font-medium text-slate-900">{pub.title}</h4>
+                  <p className="text-sm text-slate-600 mt-1">
                     {pub.journal} • {pub.year}
                   </p>
                 </div>
@@ -164,13 +164,13 @@ const StudentReviewPage = () => {
       {/* Co-Curricular Activities */}
       {student.coCurricular && student.coCurricular.length > 0 && (
         <Card className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Co-Curricular Activities</h2>
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">Co-Curricular Activities</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {student.coCurricular.map((activity, index) => (
-              <div key={index} className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-medium text-gray-900">{activity.activity}</h4>
-                <p className="text-sm text-gray-600 mt-1">Role: {activity.role}</p>
-                <p className="text-sm text-gray-500 mt-1">Year: {activity.year}</p>
+              <div key={index} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                <h4 className="font-medium text-slate-900">{activity.activity}</h4>
+                <p className="text-sm text-slate-600 mt-1">Role: {activity.role}</p>
+                <p className="text-sm text-slate-500 mt-1">Year: {activity.year}</p>
                 {activity.achievement && (
                   <p className="text-sm text-emerald-600 font-medium mt-1">{activity.achievement}</p>
                 )}
@@ -196,7 +196,7 @@ const StudentReviewPage = () => {
       {showApprovalConfirm && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex min-h-screen items-center justify-center p-4">
-            <div className="fixed inset-0 bg-gray-900 bg-opacity-50" onClick={() => setShowApprovalConfirm(false)} />
+            <div className="fixed inset-0 bg-slate-900 bg-opacity-50" onClick={() => setShowApprovalConfirm(false)} />
             <Card className="relative max-w-md w-full p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirm Approval</h3>
               <p className="text-gray-600 mb-6">

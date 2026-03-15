@@ -54,7 +54,7 @@ const RejectModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
         {/* Remarks Input */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-slate-700 mb-2">
             Rejection Remarks <span className="text-rose-600">*</span>
           </label>
           <textarea
@@ -65,24 +65,24 @@ const RejectModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
             }}
             rows={5}
             className={`
-              block w-full px-4 py-3 border rounded-lg
+              block w-full px-4 py-3 border rounded-lg bg-white
               focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
-              ${error ? 'border-rose-300' : 'border-gray-300'}
+              ${error ? 'border-rose-300' : 'border-slate-300'}
             `}
             placeholder="Explain clearly why this submission is being rejected and what the student needs to correct..."
           />
           {error && (
             <p className="mt-2 text-sm text-rose-600">{error}</p>
           )}
-          <p className="mt-2 text-xs text-gray-500">
+          <p className="mt-2 text-xs text-slate-500">
             Character count: {remarks.length} (minimum 10 required)
           </p>
         </div>
 
         {/* Example Remarks */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <p className="text-xs font-medium text-gray-700 mb-2">Example remarks:</p>
-          <ul className="text-xs text-gray-600 space-y-1 list-disc list-inside">
+        <div className="bg-slate-50 rounded-lg p-4">
+          <p className="text-xs font-medium text-slate-700 mb-2">Example remarks:</p>
+          <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
             <li>Attendance certificate is missing for the current semester</li>
             <li>Course marks verification pending - contact department office</li>
             <li>Co-curricular activity certificates need proper signatures</li>

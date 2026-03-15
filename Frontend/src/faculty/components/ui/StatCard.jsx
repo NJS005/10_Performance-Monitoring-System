@@ -4,9 +4,9 @@ import { Card } from './Card';
 export const StatCard = ({ icon, label, value, subtext, color = 'indigo' }) => {
   const colorClasses = {
     indigo: 'bg-indigo-100 text-indigo-600',
-    amber: 'bg-amber-100 text-amber-600',
-    emerald: 'bg-emerald-100 text-emerald-600',
-    rose: 'bg-rose-100 text-rose-600'
+    amber: 'bg-amber-50 text-amber-600',
+    emerald: 'bg-emerald-50 text-emerald-600',
+    rose: 'bg-rose-50 text-rose-600'
   };
 
   return (

@@ -33,17 +33,27 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     }
   ];
 
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userName = user?.name?.toUpperCase() || "Faculty Advisor";
+  const displayName = userName.toLowerCase().startsWith("dr") ? userName : `Dr. ${userName}`;
+  const initials = userName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0].toUpperCase())
+    .join("");
+
   return (
     <div className={`
-      fixed left-0 top-0 h-full bg-gradient-to-b from-indigo-900 via-purple-900 to-indigo-900
+      fixed left-0 top-0 h-full bg-gradient-to-b from-slate-800 to-slate-700
       transition-all duration-300 z-40
       ${isOpen ? 'w-64' : 'w-20'}
     `}>
       {/* Logo */}
       <div className="flex items-center h-16 px-6 border-b border-white/10">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-            <span className="text-indigo-600 font-bold text-sm">AMS</span>
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-sm">AMS</span>
           </div>
           {isOpen && (
             <span className="text-white font-semibold text-lg">Faculty Portal</span>
@@ -62,8 +72,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 flex items-center px-3 py-3 rounded-lg text-sm font-medium
                 transition-all duration-200
                 ${isActive 
-                  ? 'bg-white/10 text-white' 
-                  : 'text-indigo-200 hover:bg-white/5 hover:text-white'
+                  ? 'bg-indigo-600/30 text-white' 
+                  : 'text-slate-300 hover:bg-slate-700 hover:text-white'
                 }
               `}
             >
@@ -86,15 +96,15 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       </nav>
 
       {/* User Profile */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
+      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-600">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center text-white font-semibold">
+          <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
             FA
           </div>
           {isOpen && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">Dr. Faculty Advisor</p>
-              <p className="text-xs text-indigo-300 truncate">faculty@university.edu</p>
+              <p className="text-sm font-medium text-white truncate">{displayName}</p>
+              <p className="text-xs text-slate-400 truncate">{user?.email || 'faculty@university.edu'}</p>
             </div>
           )}
         </div>
