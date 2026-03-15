@@ -42,6 +42,16 @@ const StudentsPage = () => {
 
   const { data: students = [], isLoading } = useStudents(filters);
 
+  const displayedStudents = useMemo(() => {
+    if (!searchQuery) return students;
+    const query = searchQuery.toLowerCase();
+    return students.filter((s) => {
+      const nameMatch = s.name?.toLowerCase().includes(query);
+      const rollMatch = s.rollNumber?.toLowerCase().includes(query);
+      return nameMatch || rollMatch;
+    });
+  }, [students, searchQuery]);
+
   const columns = useMemo(
     () => [ 
       {
@@ -125,7 +135,7 @@ const StudentsPage = () => {
   );
 
   const table = useReactTable({
-    data: students,
+    data: displayedStudents,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),

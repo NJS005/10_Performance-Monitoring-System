@@ -4,7 +4,9 @@ import org.springframework.stereotype.Repository;
 
 import com.performance.Monitoring.Modal.Student;
 
+import java.util.List;
+
 @Repository
 public interface StudentRepo extends JpaRepository<Student, String> {
-
+    List<Student> findByFacultyAdvisor(String facultyAdvisor);
 }
