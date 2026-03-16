@@ -49,9 +49,7 @@ public class AuthController {
 
 
                 String domain = payload.getHostedDomain();
-                if (domain == null || !domain.equals("nitc.ac.in")) {
-                    return ResponseEntity.status(403).body("Must use @nitc.ac.in email");
-                }
+
 
                 boolean isFaculty = requestedRole != null && requestedRole.toLowerCase().contains("faculty");
 

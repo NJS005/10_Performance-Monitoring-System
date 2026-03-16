@@ -134,7 +134,7 @@ const FacultyDashboard = () => {
                   Program
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                  verificationStatus
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Submitted
@@ -163,15 +163,21 @@ const FacultyDashboard = () => {
                     <div className="text-sm text-gray-500">{student.department}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge status={student.status}>
-                      {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(student.submittedDate)}
+                      <Badge verificationStatus={student.verificationStatus || 'unknown'}>
+                        {student.verificationStatus 
+                          ? student.verificationStatus.charAt(0).toUpperCase() + student.verificationStatus.slice(1) 
+                          : 'Unknown'}
+                      </Badge>
+                    </td>
+                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date().toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    {student.status === 'pending' ? (
+                    {student.verificationStatus === 'pending' ? (
                       <Button 
                         size="sm" 
                         variant="primary"
