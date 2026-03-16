@@ -10,7 +10,17 @@ import { useLocation } from "react-router-dom";
 
 const StudentDashboard = () => {
   const location = useLocation();
-  const rollNo = location.state?.rollNo || '';
+
+
+    const userString = localStorage.getItem("user");
+    const savedUser = userString ? JSON.parse(userString) : {};
+    const rollNo = location.state?.rollno 
+                || location.state?.rollNo 
+                || savedUser.rollno 
+                || savedUser.rollNo 
+                || '';
+
+    console.log("Extracted Roll Number:", rollNo);
 
   const [activeView, setActiveView] = useState('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);

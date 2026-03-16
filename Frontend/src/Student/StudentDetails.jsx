@@ -242,7 +242,18 @@ export default function StudentDetailCollection() {
           temporaryAddress: sameAddress ? { ...formData.permanentAddress } : formData.temporaryAddress,
         }),
       });
-      if (res.ok) navigate("/");
+     if (res.ok) {
+       
+        const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+        
+        const updatedUser = { 
+          ...currentUser, 
+          rollno: formData.rollNo.toUpperCase() 
+        };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+
+        navigate("/student", { state: { rollno: formData.rollNo.toUpperCase() } });
+      }
       else alert("Failed to save details. Please try again.");
     } catch (err) {
       console.error(err);
