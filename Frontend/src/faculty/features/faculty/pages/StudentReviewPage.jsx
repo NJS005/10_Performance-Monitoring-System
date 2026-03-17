@@ -89,37 +89,61 @@ const StudentReviewPage = () => {
         
 
         {/* Courses */}
-        <div className="mb-6">
-          <h3 className="text-sm font-semibold text-slate-900 mb-3">Course Performance</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-100">
-                <tr>
-                  <th className="px-4 py-2 text-left font-medium text-slate-700">Course Code</th>
-                  <th className="px-4 py-2 text-left font-medium text-slate-700">Course Name</th>
-                  <th className="px-4 py-2 text-center font-medium text-slate-700">Credits</th>
-                  <th className="px-4 py-2 text-center font-medium text-slate-700">Marks</th>
-                  <th className="px-4 py-2 text-center font-medium text-slate-700">Grade</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {student.academicData.courses.map((course, index) => (
-                  <tr key={index} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 font-medium text-slate-900">{course.code}</td>
-                    <td className="px-4 py-3 text-slate-700">{course.name}</td>
-                    <td className="px-4 py-3 text-center text-slate-700">{course.credits}</td>
-                    <td className="px-4 py-3 text-center font-medium text-slate-900">{course.marks}</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                        {course.grade}
-                      </span>
-                    </td>
+       {/* Courses - grouped by semester */}
+<div className="mb-6">
+  <h3 className="text-sm font-semibold text-slate-900 mb-3">Course Performance</h3>
+  {student.academicData?.courses?.length > 0 ? (
+    (() => {
+      // Group courses by semester
+      const bySemester = student.academicData.courses.reduce((acc, course) => {
+        const sem = course.semester || 'N/A';
+        if (!acc[sem]) acc[sem] = [];
+        acc[sem].push(course);
+        return acc;
+      }, {});
+
+      return Object.keys(bySemester)
+        .sort((a, b) => a - b)
+        .map(sem => (
+          <div key={sem} className="mb-4">
+            <p className="text-xs font-semibold text-indigo-600 uppercase mb-2">
+              Semester {sem}
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-100">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-medium text-slate-700">Course Code</th>
+                    <th className="px-4 py-2 text-left font-medium text-slate-700">Course Name</th>
+                    <th className="px-4 py-2 text-center font-medium text-slate-700">Type</th>
+                    <th className="px-4 py-2 text-center font-medium text-slate-700">Credits</th>
+                    <th className="px-4 py-2 text-center font-medium text-slate-700">Grade</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {bySemester[sem].map((course, index) => (
+                    <tr key={index} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 font-medium text-slate-900">{course.code}</td>
+                      <td className="px-4 py-3 text-slate-700">{course.name}</td>
+                      <td className="px-4 py-3 text-center text-slate-500 text-xs">{course.courseType || '—'}</td>
+                      <td className="px-4 py-3 text-center text-slate-700">{course.credits}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                          {course.grade}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        ));
+    })()
+  ) : (
+    <p className="text-sm text-slate-500">No course data available for this student</p>
+  )}
+</div>
 
         {/* Projects */}
         {student.academicData.projects && student.academicData.projects.length > 0 && (
@@ -162,9 +186,9 @@ const StudentReviewPage = () => {
       </Card>
 
       {/* Co-Curricular Activities */}
-      {student.coCurricular && student.coCurricular.length > 0 && (
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Co-Curricular Activities</h2>
+      <Card className="p-6">
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">Co-Curricular Activities</h2>
+        {student.coCurricular && student.coCurricular.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {student.coCurricular.map((activity, index) => (
               <div key={index} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
@@ -177,8 +201,10 @@ const StudentReviewPage = () => {
               </div>
             ))}
           </div>
-        </Card>
-      )}
+        ) : (
+          <p className="text-sm text-slate-500">No data available for that roll no</p>
+        )}
+      </Card>
 
       {/* Submission History */}
       <SubmissionHistory student={student} />

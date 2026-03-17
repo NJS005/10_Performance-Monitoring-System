@@ -1,6 +1,7 @@
 import { mockStudents, mockAcademicData, mockCoCurricular } from '../data/mockData';
 
 const API_BASE = "http://localhost:8080/api/faculty";
+const STUDENT_API_BASE = "http://localhost:8080/api/student";
 
 const safeGetUser = () => {
   try {
@@ -53,18 +54,125 @@ export const facultyService = {
     return Array.isArray(data) ? data.map(mapStudent) : [];
   },
 
-  // Get student details (mocked for now)
-  async getStudentDetails(studentId) {
-    await delay(300);
-    
-    const student = mockStudents.find(s => s.id === studentId);
-    if (!student) throw new Error('Student not found');
+async getStudentDetails(studentId) {
+  // Fetch real student info from backend
+  let backendStudent = null;
+  try {
+    const res = await fetch(`${STUDENT_API_BASE}/details/${encodeURIComponent(studentId)}`);
+    if (res.ok) {
+      backendStudent = await res.json();
+      console.log('🔍 backendStudent from API:', backendStudent);
+    } else {
+      console.warn('⚠️ Student API returned:', res.status);
+    }
+  } catch (e) {
+    console.error('❌ Failed to fetch student details from backend:', e);
+  }
 
-    return {
-      ...mapStudent(student),
-      academicData: mockAcademicData[studentId] || { courses: [], attendance: 0, publications: [], projects: [] },
-      coCurricular: mockCoCurricular[studentId] || []
-    };
+  // Fall back to mock only if backend returned nothing
+  const mockStudent = mockStudents.find(
+    s => s.id === studentId || s.rollNo === studentId
+  );
+  console.log('🔍 mockStudent fallback:', mockStudent);
+
+  // Prefer backend data, fall back to mock, last resort is shell
+  const rawStudent = backendStudent || mockStudent || { 
+    id: studentId, 
+    rollNo: studentId 
+  };
+
+  const baseStudent = mapStudent(rawStudent);
+  console.log('🔍 baseStudent after mapStudent:', baseStudent);
+
+  const rollNo = baseStudent.rollNumber || baseStudent.rollNo || studentId;
+
+  const baseAcademic = (mockAcademicData[studentId]) || {
+    courses: [],
+    attendance: 0,
+    publications: [],
+    projects: []
+  };
+
+  let courses = [];
+  let coCurricular = [];
+
+  if (rollNo) {
+    try {
+      courses = await this.getStudentCourses(rollNo);
+    } catch (e) {
+      console.error('❌ Failed to fetch courses:', e);
+    }
+
+    try {
+      coCurricular = await this.getStudentCoCurricular(rollNo);
+    } catch (e) {
+      console.error('❌ Failed to fetch co-curricular:', e);
+    }
+  }
+
+  const result = {
+    ...baseStudent,
+    academicData: {
+      ...baseAcademic,
+      courses
+    },
+    coCurricular
+  };
+
+  console.log('🔍 final merged student:', result);
+  return result;
+},
+
+  // Fetch course data for a student by roll number from backend
+  async getStudentCourses(rollNo) {
+    if (!rollNo) return [];
+
+    const res = await fetch(`${STUDENT_API_BASE}/courses/${encodeURIComponent(rollNo)}`);
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText || 'Failed to fetch courses');
+    }
+
+    const data = await res.json();
+    // Backend may return a string like "No data available for that roll no"
+    if (typeof data === 'string' || !Array.isArray(data)) {
+      return [];
+    }
+
+    return data.map((c) => ({
+      code: c.courseCode,
+      name: c.courseName,
+      credits: c.credit,
+      grade: c.grade
+    }));
+  },
+
+  // Fetch co-curricular activities for a student by roll number from backend
+  async getStudentCoCurricular(rollNo) {
+    if (!rollNo) return [];
+
+    const res = await fetch(`${STUDENT_API_BASE}/cocurricular/${encodeURIComponent(rollNo)}`);
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText || 'Failed to fetch co-curricular activities');
+    }
+
+    const data = await res.json();
+    // Backend may return a string like "No data available for that roll no"
+    if (typeof data === 'string' || !Array.isArray(data)) {
+      return [];
+    }
+
+    return data.map((a) => {
+      const year = a.date ? String(a.date).split('-')[0] : '';
+      return {
+        activity: a.title,
+        year,
+        achievement: a.description,
+        // Use backend "type" as a reasonable stand-in for role if present
+        role: a.type || ''
+      };
+    });
   },
 
   // Get dashboard stats for the logged-in faculty advisor
