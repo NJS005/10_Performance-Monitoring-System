@@ -113,6 +113,10 @@ export const CoCurricularActivities = ({ rollNo }) => {
     });
 
     console.log('Submitting activities via FormData');
+    console.log('FormData entries:');
+    for (let pair of fd.entries()) {
+      console.log(pair[0]+ ': ' + pair[1]);
+    }
 
     try {
       const response = await fetch(`http://localhost:8080/api/student/cocurricular/${rollNo}`, {

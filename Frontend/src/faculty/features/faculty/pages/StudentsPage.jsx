@@ -37,8 +37,7 @@ const StudentsPage = () => {
   const filters = useMemo(() => ({
     program: selectedProgram !== 'all' ? selectedProgram : undefined,
     status: selectedStatus !== 'all' ? selectedStatus : undefined,
-    search: searchQuery
-  }), [selectedProgram, selectedStatus, searchQuery]);
+  }), [selectedProgram, selectedStatus]);
 
   const { data: students = [], isLoading } = useStudents(filters);
 
