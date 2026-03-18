@@ -5,18 +5,21 @@ import java.util.List;
 // import org.checkerframework.checker.units.qual.s;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
+// import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import com.performance.Monitoring.Modal.Student;
+import com.performance.Monitoring.Modal.Attendance;
+import com.performance.Monitoring.Modal.CoCurricular;
 import com.performance.Monitoring.Service.StudentService;
-import com.performance.Monitoring.dto.CoCurricularFormWrapper;
-import org.springframework.http.MediaType;
-
+// import com.performance.Monitoring.dto.CoCurricularFormWrapper;
+// import org.springframework.http.MediaType;
+// import org.springframework.web.bind.annotation.RequestParam;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import com.performance.Monitoring.Modal.Courses;
@@ -61,19 +64,40 @@ public class StudentController {
 
     @GetMapping("/cocurricular/{rollNumber}")
 public ResponseEntity<?> getStudentCoCurricular(@PathVariable String rollNumber) {
-    List<?> coCurriculars = studentService.getStudentCoCurricular(rollNumber);
+    List<CoCurricular> coCurriculars = studentService.getStudentCoCurricular(rollNumber);
     return ResponseEntity.ok(coCurriculars);
 }
 
-// Specify that this consumes MULTIPART_FORM_DATA
-    @PostMapping(value = "/cocurricular/{rollNumber}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+
+    @PostMapping(value = "/cocurricular/{rollNumber}")
         public ResponseEntity<String> addStudentCoCurricular(
         @PathVariable String rollNumber, 
-        @ModelAttribute CoCurricularFormWrapper wrapper) { // Use @ModelAttribute!
+        @RequestBody List<CoCurricular> coCurriculars) { // Use @ModelAttribute!
     
     // Pass the list of DTOs to the service
-    studentService.addStudentCoCurricular(rollNumber, wrapper.getActivities());
+    studentService.addStudentCoCurricular(rollNumber, coCurriculars);
     
     return ResponseEntity.ok("Co-curricular activity added successfully");
-}
+    }
+
+    @GetMapping("/attendance/{rollNumber}")
+    public ResponseEntity<?> getStudentAttendance(@PathVariable String rollNumber) {
+        List<Attendance> attendance = studentService.getStudentAttendance(rollNumber);
+        return ResponseEntity.ok(attendance);
+    }
+
+    @PostMapping("/attendance/{rollNumber}")
+    public ResponseEntity<String> addStudentAttendance(@PathVariable String rollNumber, @RequestBody List<Attendance> attendance) {
+        studentService.updateAttendance(rollNumber, attendance);
+        return ResponseEntity.ok("Attendance record added successfully");
+    }
+
+    @DeleteMapping("/cocurricular/{rollNumber}")
+    public ResponseEntity<String> deleteCoCurricular(
+        @PathVariable String rollNumber, 
+        @RequestBody String title) {
+            System.out.println("Received request to delete co-curricular activity: " + title + " for roll number: " + rollNumber);
+        studentService.deleteCoCurricular(rollNumber, title);
+        return ResponseEntity.ok("Co-curricular activity deleted successfully");
+    }   
 }

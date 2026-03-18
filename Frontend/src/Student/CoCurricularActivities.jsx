@@ -78,51 +78,51 @@ export const CoCurricularActivities = ({ rollNo }) => {
   };
 
   // Add new activity
-  const handleAddActivity = () => {
-    if (!formData.title.trim() || !formData.description.trim()) {
-      alert('Please fill in title and description');
-      return;
-    }
+const handleAddActivity = () => {
+  if (!formData.title.trim() || !formData.description.trim()) {
+    alert('Please fill in title and description');
+    return;
+  }
 
-    const newActivity = {
-      id: Date.now(),
-      ...formData,
-      date: formData.date || new Date().toISOString().split('T')[0]
-    };
+  const duplicate = activities.some(
+    activity => activity.title.trim().toLowerCase() === formData.title.trim().toLowerCase()
+  );
 
-    setActivities(prev => [newActivity, ...prev]);
-    resetForm();
+  if (duplicate) {
+    alert(`An activity with the title "${formData.title}" already exists.`);
+    return;
+  }
+
+  const newActivity = {
+    id: Date.now(),
+    ...formData,
+    date: formData.date || new Date().toISOString().split('T')[0]
   };
 
+  setActivities(prev => [newActivity, ...prev]);
+  resetForm();
+};
+
   const handleSubmit = async () => {
-    const fd = new FormData();
-
-    // Loop through your array and append each property with an index
-    activities.forEach((item, index) => {
-      fd.append(`activities[${index}].rollNo`, rollNo);
-      fd.append(`activities[${index}].title`, item.title);
-      fd.append(`activities[${index}].description`, item.description);
-      fd.append(`activities[${index}].type`, item.type);
-      fd.append(`activities[${index}].certificateName`, item.certificateName);
-      fd.append(`activities[${index}].date`, item.date);
-
-      // Append the actual file object ONLY if it's a new File, not a fetched Base64 string
-      if (item.certificate && item.certificate instanceof File) {
-        fd.append(`activities[${index}].certificate`, item.certificate);
-      }
-    });
-
-    console.log('Submitting activities via FormData');
+    const payload = activities.map(item => ({
+      rollNo: rollNo,
+      title: item.title,
+      description: item.description,
+      type: item.type,
+      certificateName: item.certificateName,
+      date: item.date,
+      certificate: ""
+    }));
 
     try {
+      console.log('Submitting activities with payload:', payload);
       const response = await fetch(`http://localhost:8080/api/student/cocurricular/${rollNo}`, {
         method: 'POST',
-        body: fd 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
 
-      if (!response.ok) {
-        throw new Error(`Submission failed: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Submission failed: ${response.status}`);
 
       console.log('Successfully submitted!');
       alert('Activities submitted successfully!');
@@ -163,9 +163,24 @@ export const CoCurricularActivities = ({ rollNo }) => {
   };
 
   // Delete activity
-  const handleDeleteActivity = (id) => {
+  const handleDeleteActivity = async (title) => {
     if (window.confirm('Are you sure you want to delete this activity?')) {
-      setActivities(prev => prev.filter(activity => activity.id !== id));
+      console.log(`Attempting to delete activity with title: ${title} for rollNo: ${rollNo}`);
+      try {
+        const response = await fetch(`http://localhost:8080/api/student/cocurricular/${rollNo}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: title?title:null
+        });
+
+        if (!response.ok) throw new Error(`Delete failed: ${response.status}`);
+
+        setActivities(prev => prev.filter(activity => activity.title !== title));
+
+      } catch (error) {
+        console.error('Error deleting activity:', error);
+        alert('Failed to delete activity. Please try again.');
+      }
     }
   };
 
@@ -193,7 +208,7 @@ export const CoCurricularActivities = ({ rollNo }) => {
     try {
       const isPdf = fileName && fileName.toLowerCase().endsWith('.pdf');
       const mimeType = isPdf ? 'application/pdf' : 'image/jpeg';
-      
+
       const byteCharacters = atob(certificateBase64);
       const byteNumbers = new Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
@@ -234,7 +249,7 @@ export const CoCurricularActivities = ({ rollNo }) => {
           <h3 className="text-2xl font-bold text-gray-900 mb-1">Co-Curricular Activities</h3>
           <p className="text-gray-500">Document your achievements and participation</p>
         </div>
-        
+
         {!isAdding && !editingId && (
           <button
             onClick={() => setIsAdding(true)}
@@ -334,7 +349,7 @@ export const CoCurricularActivities = ({ rollNo }) => {
                 </svg>
                 Certificate (Optional)
               </label>
-              
+
               {!formData.certificateName ? (
                 <div className="relative">
                   <input
@@ -410,7 +425,7 @@ export const CoCurricularActivities = ({ rollNo }) => {
         <div className="space-y-4">
           {activities.map(activity => {
             const activityType = getActivityType(activity.type);
-            
+
             return (
               <div
                 key={activity.id}
@@ -431,10 +446,10 @@ export const CoCurricularActivities = ({ rollNo }) => {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        {new Date(activity.date).toLocaleDateString('en-US', { 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
+                        {new Date(activity.date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
                         })}
                       </p>
                     )}
@@ -442,7 +457,7 @@ export const CoCurricularActivities = ({ rollNo }) => {
 
                   {/* Action Buttons */}
                   <div className="flex gap-2">
-                    <button
+                    {/* <button
                       onClick={() => handleEditActivity(activity)}
                       className="text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition-colors duration-200"
                       title="Edit"
@@ -450,9 +465,9 @@ export const CoCurricularActivities = ({ rollNo }) => {
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
-                    </button>
+                    </button> */}
                     <button
-                      onClick={() => handleDeleteActivity(activity.id)}
+                      onClick={() => handleDeleteActivity(activity.title)}
                       className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors duration-200"
                       title="Delete"
                     >
@@ -475,7 +490,7 @@ export const CoCurricularActivities = ({ rollNo }) => {
                       </svg>
                       <span className="font-medium">Certificate: {activity.certificateName}</span>
                     </div>
-                    
+
                     {/* Only show "View" if it's a fetched string from the DB, not a pending File upload */}
                     {typeof activity.certificate === 'string' && (
                       <button
@@ -496,8 +511,8 @@ export const CoCurricularActivities = ({ rollNo }) => {
       {/* Submit Button */}
       {activities.length > 0 && (
         <div className="mt-8 pt-6 border-t border-gray-200">
-          <button onClick={handleSubmit} 
-          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3 rounded-lg font-bold transition-all duration-200 transform hover:scale-[1.02] shadow-lg">
+          <button onClick={handleSubmit}
+            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3 rounded-lg font-bold transition-all duration-200 transform hover:scale-[1.02] shadow-lg">
             Submit All Activities for Verification
           </button>
         </div>

@@ -24,8 +24,6 @@ public class CoCurricular {
     private String certificateName;
     private String date;
 
-    @Lob
-    @Column(columnDefinition = "bytea")  // ← critical for PostgreSQL
     private byte[] certificate;
 
     public CoCurricular() {

@@ -330,7 +330,7 @@ const StudentDashboard = () => {
         return <CoCurricularActivities rollNo={rollNo} />;
 
       case 'attendance':
-        return <AttendanceTracker courses={courseDetails} />;
+        return <AttendanceTracker courses={courseDetails} rollNo={rollNo} />;
 
       default:
         return null;
