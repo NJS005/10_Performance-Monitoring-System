@@ -1,22 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const PROGRAMS = ["B.Tech", "B.Arch", "M.Tech", "PhD", "BSc", "MSc", "Integrated"];
 const UG_PROGRAMS = ["B.Tech", "B.Arch"];
 const FACULTY_PROGRAMS = ["B.Tech", "B.Arch", "M.Tech"];
-const DEPARTMENTS = [
-  { code: "CS", label: "CS – Computer Science" },
-  { code: "EC", label: "EC – Electronics & Communication" },
-  { code: "EE", label: "EE – Electrical Engineering" },
-  { code: "ME", label: "ME – Mechanical Engineering" },
-  { code: "CE", label: "CE – Civil Engineering" },
-  { code: "CH", label: "CH – Chemical Engineering" },
-  { code: "PE", label: "PE – Production Engineering" },
-  { code: "MT", label: "MT – Materials Science" },
-  { code: "BT", label: "BT – Biotechnology" },
-  { code: "EP", label: "EP – Engineering Physics" },
-  { code: "AR", label: "AR – Architecture" },
-];
-const DEPT_MAP = Object.fromEntries(DEPARTMENTS.map(d => [d.code, d.label.split(" – ")[1]]));
 
 // ── Shared inline styles ────────────────────────────────────────────────────
 
@@ -168,6 +154,39 @@ export const PersonalDetailsSection = ({
   const [editData,  setEditData]  = useState(studentData);
   const [expanded,  setExpanded]  = useState(false);
 
+  const [departmentsList, setDepartmentsList] = useState([]);
+  const [deptMap, setDeptMap] = useState({});
+  const [facultyList, setFacultyList] = useState([]);
+
+  useEffect(() => {
+    fetch('http://localhost:8080/api/public/departments')
+      .then(res => res.json())
+      .then(data => {
+        const dmap = {};
+        const formattedList = data.map(d => {
+           dmap[d.code] = d.name;
+           return { value: d.code, label: `${d.code} - ${d.name}` };
+        });
+        setDepartmentsList(formattedList);
+        setDeptMap(dmap);
+      })
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (editData.department) {
+       fetch(`http://localhost:8080/api/public/faculty?department=${editData.department}`)
+         .then(res => res.json())
+         .then(data => {
+            const facultyOpts = data.map(f => ({ value: f.name, label: f.name }));
+            setFacultyList(facultyOpts);
+         })
+         .catch(console.error);
+    } else {
+       setFacultyList([]);
+    }
+  }, [editData.department]);
+
   const handleEdit   = () => { setIsEditing(true); setEditData(studentData); };
   const handleCancel = () => { setEditData(studentData); setIsEditing(false); };
   const handleSave   = () => { setStudentData({ ...editData, personalVerificationStatus: 'pending' }); setIsEditing(false); };
@@ -292,10 +311,10 @@ export const PersonalDetailsSection = ({
               ? (UG_PROGRAMS.includes(editData.program)
                   ? <EditSelect label="Department" value={editData.department}
                       onChange={v => handleChange("department", v)}
-                      options={DEPARTMENTS.map(d => ({ value: d.code, label: d.label }))} />
+                      options={departmentsList} />
                   : <EditInput label="Department / School" value={editData.department}
                       onChange={v => handleChange("department", v)} />)
-              : <DisplayField label="Department" value={DEPT_MAP[studentData.department] || studentData.department} />}
+              : <DisplayField label="Department" value={deptMap[studentData.department] || studentData.department} />}
 
             {isEditing
               ? <EditSelect label="Program" value={editData.program}
@@ -335,8 +354,9 @@ export const PersonalDetailsSection = ({
                     : <DisplayField label="Contact Number" value={String(studentData.contactNo)} />}
 
                   {isEditing
-                    ? <EditInput label={advisorLabel} value={editData[advisorEditField]}
-                        onChange={v => handleChange(advisorEditField, v)} />
+                    ? <EditSelect label={advisorLabel} value={editData[advisorEditField]}
+                        onChange={v => handleChange(advisorEditField, v)} 
+                        options={facultyList} />
                     : <DisplayField label={advisorLabel} value={advisorValue} />}
                 </div>
 

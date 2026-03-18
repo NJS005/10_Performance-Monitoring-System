@@ -10,7 +10,17 @@ import { useLocation } from "react-router-dom";
 
 const StudentDashboard = () => {
   const location = useLocation();
-  const rollNo = location.state?.rollNo || '';
+
+
+    const userString = localStorage.getItem("user");
+    const savedUser = userString ? JSON.parse(userString) : {};
+    const rollNo = location.state?.rollno 
+                || location.state?.rollNo 
+                || savedUser.rollno 
+                || savedUser.rollNo 
+                || '';
+
+    console.log("Extracted Roll Number:", rollNo);
 
   const [activeView, setActiveView] = useState('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -32,8 +42,12 @@ const StudentDashboard = () => {
     if (!rollNo) return;
     const fetchStudentData = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/api/student/details/${rollNo}`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const response = await fetch(`http://localhost:8080/api/student/details/${rollNo}`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
         const data = await response.json();
         setStudentData(data);
       } catch (error) {
@@ -47,8 +61,12 @@ const StudentDashboard = () => {
     if(!studentData) return;
     const fetchCourseDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/api/student/courses/${rollNo}`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const response = await fetch(`http://localhost:8080/api/student/courses/${rollNo}`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
         const data = await response.json();
         console.log("Fetched course details:", data);
         const core = data.filter(c => c.courseType === 'PC' || c.courseType === 'IC').map(c => ({
@@ -69,6 +87,7 @@ const StudentDashboard = () => {
         }));
         
         setCourseDetails({ core: core, elective: elective });
+        console.log("Processed course details:", { core, elective });
        
       } catch (error) {
         console.error('Error fetching course details:', error);

@@ -1,67 +1,204 @@
 import { mockStudents, mockAcademicData, mockCoCurricular } from '../data/mockData';
 
-// Simulate API delay
+const API_BASE = "http://localhost:8080/api/faculty";
+const STUDENT_API_BASE = "http://localhost:8080/api/student";
+
+const safeGetUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("user") || "{}");
+  } catch {
+    return {};
+  }
+};
+
+// Simulate API delay for mock endpoints
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+const mapStudent = (student) => {
+  const initials = (student?.name || "")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0].toUpperCase())
+    .join("");
+
+  return {
+    ...student,
+    id: student.rollNo,
+    rollNumber: student.rollNo,
+    status: student.verificationStatus || student.status || 'pending',
+    avatar: initials || 'FA',
+    semester: student.batch || '',
+    cgpa: student.cgpa || '-',
+    submittedDate: student.submittedDate || new Date().toISOString(),
+  };
+};
+
 export const facultyService = {
-  // Get all students
+  // Get all students assigned to the logged-in faculty advisor
   async getStudents(filters = {}) {
-    await delay(500);
-    
-    let students = [...mockStudents];
-    
-    // Apply filters
-    if (filters.program) {
-      students = students.filter(s => s.program === filters.program);
+    const user = safeGetUser();
+    const params = new URLSearchParams();
+
+    if (user?.email) params.append("email", user.email);
+    if (filters.program) params.append("program", filters.program);
+    if (filters.status) params.append("status", filters.status);
+    if (filters.search) params.append("search", filters.search);
+
+    const res = await fetch(`${API_BASE}/students?${params.toString()}`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText || "Failed to fetch students");
     }
-    
-    if (filters.status) {
-      students = students.filter(s => s.status === filters.status);
-    }
-    
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      students = students.filter(s => 
-        s.name.toLowerCase().includes(searchLower) ||
-        s.rollNumber.toLowerCase().includes(searchLower)
-      );
-    }
-    
-    return students;
+    const data = await res.json();
+    return Array.isArray(data) ? data.map(mapStudent) : [];
   },
 
-  // Get student details
-  async getStudentDetails(studentId) {
-    await delay(300);
-    
-    const student = mockStudents.find(s => s.id === studentId);
-    if (!student) throw new Error('Student not found');
-    
-    return {
-      ...student,
-      academicData: mockAcademicData[studentId] || { courses: [], attendance: 0, publications: [], projects: [] },
-      coCurricular: mockCoCurricular[studentId] || []
-    };
+async getStudentDetails(studentId) {
+  // Fetch real student info from backend
+  let backendStudent = null;
+  try {
+    const res = await fetch(`${STUDENT_API_BASE}/details/${encodeURIComponent(studentId)}`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
+    if (res.ok) {
+      backendStudent = await res.json();
+      console.log('🔍 backendStudent from API:', backendStudent);
+    } else {
+      console.warn('⚠️ Student API returned:', res.status);
+    }
+  } catch (e) {
+    console.error('❌ Failed to fetch student details from backend:', e);
+  }
+
+  // Fall back to mock only if backend returned nothing
+  const mockStudent = mockStudents.find(
+    s => s.id === studentId || s.rollNo === studentId
+  );
+  console.log('🔍 mockStudent fallback:', mockStudent);
+
+  // Prefer backend data, fall back to mock, last resort is shell
+  const rawStudent = backendStudent || mockStudent || { 
+    id: studentId, 
+    rollNo: studentId 
+  };
+
+  const baseStudent = mapStudent(rawStudent);
+  console.log('🔍 baseStudent after mapStudent:', baseStudent);
+
+  const rollNo = baseStudent.rollNumber || baseStudent.rollNo || studentId;
+
+  const baseAcademic = (mockAcademicData[studentId]) || {
+    courses: [],
+    attendance: 0,
+    publications: [],
+    projects: []
+  };
+
+  let courses = [];
+  let coCurricular = [];
+
+  if (rollNo) {
+    try {
+      courses = await this.getStudentCourses(rollNo);
+    } catch (e) {
+      console.error('❌ Failed to fetch courses:', e);
+    }
+
+    try {
+      coCurricular = await this.getStudentCoCurricular(rollNo);
+    } catch (e) {
+      console.error('❌ Failed to fetch co-curricular:', e);
+    }
+  }
+
+  const result = {
+    ...baseStudent,
+    academicData: {
+      ...baseAcademic,
+      courses
+    },
+    coCurricular
+  };
+
+  console.log('🔍 final merged student:', result);
+  return result;
+},
+
+  // Fetch course data for a student by roll number from backend
+  async getStudentCourses(rollNo) {
+    if (!rollNo) return [];
+
+    const res = await fetch(`${STUDENT_API_BASE}/courses/${encodeURIComponent(rollNo)}`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText || 'Failed to fetch courses');
+    }
+
+    const data = await res.json();
+    // Backend may return a string like "No data available for that roll no"
+    if (typeof data === 'string' || !Array.isArray(data)) {
+      return [];
+    }
+
+    return data.map((c) => ({
+      code: c.courseCode,
+      name: c.courseName,
+      credits: c.credit,
+      grade: c.grade
+    }));
   },
 
-  // Get dashboard stats
+  // Fetch co-curricular activities for a student by roll number from backend
+  async getStudentCoCurricular(rollNo) {
+    if (!rollNo) return [];
+
+    const res = await fetch(`${STUDENT_API_BASE}/cocurricular/${encodeURIComponent(rollNo)}`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText || 'Failed to fetch co-curricular activities');
+    }
+
+    const data = await res.json();
+    // Backend may return a string like "No data available for that roll no"
+    if (typeof data === 'string' || !Array.isArray(data)) {
+      return [];
+    }
+
+    return data.map((a) => {
+      const year = a.date ? String(a.date).split('-')[0] : '';
+      return {
+        activity: a.title,
+        year,
+        achievement: a.description,
+        // Use backend "type" as a reasonable stand-in for role if present
+        role: a.type || ''
+      };
+    });
+  },
+
+  // Get dashboard stats for the logged-in faculty advisor
   async getDashboardStats() {
-    await delay(400);
-    
-    const total = mockStudents.length;
-    const pending = mockStudents.filter(s => s.status === 'pending').length;
-    const approved = mockStudents.filter(s => s.status === 'approved').length;
-    const rejected = mockStudents.filter(s => s.status === 'rejected').length;
-    
-    return {
-      total,
-      pending,
-      approved,
-      rejected,
-      recentSubmissions: mockStudents
-        .sort((a, b) => new Date(b.submittedDate) - new Date(a.submittedDate))
-        .slice(0, 5)
-    };
+    const user = safeGetUser();
+    const params = new URLSearchParams();
+
+    if (user?.email) params.append("email", user.email);
+
+    const res = await fetch(`${API_BASE}/dashboard-stats?${params.toString()}`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText || "Failed to fetch dashboard stats");
+    }
+
+    return res.json();
   },
 
   // Approve student

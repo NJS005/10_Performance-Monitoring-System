@@ -9,6 +9,9 @@ import { useDashboardStats } from '../hooks/useStudents';
 const FacultyDashboard = () => {
   const navigate = useNavigate();
   const { data: stats, isLoading } = useDashboardStats();
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userName = user?.name?.toUpperCase()   || "Faculty Advisor";
+  const displayName = userName.toLowerCase().startsWith("dr") ? userName : `Dr. ${userName}`;
 
   if (isLoading) {
     return (
@@ -26,11 +29,11 @@ const FacultyDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">Good afternoon, Dr. Faculty Advisor</h1>
+      <div className="bg-indigo-600 rounded-xl p-6 text-white">
+        <h1 className="text-2xl font-bold mb-2">Good afternoon, {displayName}</h1>
         <p className="text-indigo-100">
           You have <span className="font-semibold">{stats?.pending || 0} pending reviews</span>
-          {stats?.pending > 5 && <span className="ml-2">• <span className="text-amber-300">3 urgent</span></span>}
+          {stats?.pending > 5 && <span className="ml-2">• <span className="text-amber-200">3 urgent</span></span>}
         </p>
       </div>
 
@@ -131,7 +134,7 @@ const FacultyDashboard = () => {
                   Program
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                  verificationStatus
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Submitted
@@ -160,15 +163,21 @@ const FacultyDashboard = () => {
                     <div className="text-sm text-gray-500">{student.department}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge status={student.status}>
-                      {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(student.submittedDate)}
+                      <Badge verificationStatus={student.verificationStatus || 'unknown'}>
+                        {student.verificationStatus 
+                          ? student.verificationStatus.charAt(0).toUpperCase() + student.verificationStatus.slice(1) 
+                          : 'Unknown'}
+                      </Badge>
+                    </td>
+                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date().toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    {student.status === 'pending' ? (
+                    {student.verificationStatus === 'pending' ? (
                       <Button 
                         size="sm" 
                         variant="primary"

@@ -6,17 +6,11 @@ package com.performance.Monitoring.Modal;
 // import org.checkerframework.checker.units.qual.C;
 // import com.performance.Monitoring.Modal.Address;
 import jakarta.persistence.*;
-
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 @Entity
-@Table(name = "student",
-        uniqueConstraints = {
-        @UniqueConstraint(
-            name = "unique_student_course_verification",
-            columnNames = {"roll_no", "semester"}
-        )
-        }
-)
-
+@Table(name = "student")
 public class Student {
 
         @Id
@@ -32,8 +26,21 @@ public class Student {
         private String department;
         // @Column(nullable = false)
         private String program;
-        private String facultyAdvisor;
-        private String supervisor;
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "faculty_advisor_id", referencedColumnName = "id")
+        @JsonIgnore
+        private Faculty facultyAdvisorEntity;
+
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "supervisor_id", referencedColumnName = "id")
+        @JsonIgnore
+        private Faculty supervisorEntity;
+
+        @Transient
+        private String facultyAdvisorTemp;
+
+        @Transient
+        private String supervisorTemp;
 
         @Embedded
         @AttributeOverrides({
@@ -110,8 +117,8 @@ public class Student {
                 this.contactNo = contactNo;
                 this.department = department;
                 this.program = program;
-                this.facultyAdvisor = facultyAdvisor;
-                this.supervisor = supervisor;
+                this.facultyAdvisorTemp = facultyAdvisor;
+                this.supervisorTemp = supervisor;
                 this.permanentAddress = permanentAddress;
                 this.temporaryAddress = temporaryAddress;
                 this.fatherName = fatherName;
@@ -137,20 +144,56 @@ public class Student {
                 this.program = program;
         }
 
+        @JsonGetter("facultyAdvisor")
         public String getFacultyAdvisor() {
-                return facultyAdvisor;
+                return facultyAdvisorEntity != null ? facultyAdvisorEntity.getName() : facultyAdvisorTemp;
         }
 
+        @JsonSetter("facultyAdvisor")
         public void setFacultyAdvisor(String facultyAdvisor) {
-                this.facultyAdvisor = facultyAdvisor;
+                this.facultyAdvisorTemp = facultyAdvisor;
         }
 
+        @JsonGetter("supervisor")
         public String getSupervisor() {
-                return supervisor;
+                return supervisorEntity != null ? supervisorEntity.getName() : supervisorTemp;
         }
 
+        @JsonSetter("supervisor")
         public void setSupervisor(String supervisor) {
-                this.supervisor = supervisor;
+                this.supervisorTemp = supervisor;
+        }
+
+        public Faculty getFacultyAdvisorEntity() {
+                return facultyAdvisorEntity;
+        }
+
+        public void setFacultyAdvisorEntity(Faculty facultyAdvisorEntity) {
+                this.facultyAdvisorEntity = facultyAdvisorEntity;
+        }
+
+        public Faculty getSupervisorEntity() {
+                return supervisorEntity;
+        }
+
+        public void setSupervisorEntity(Faculty supervisorEntity) {
+                this.supervisorEntity = supervisorEntity;
+        }
+
+        public String getFacultyAdvisorTemp() {
+                return facultyAdvisorTemp;
+        }
+
+        public void setFacultyAdvisorTemp(String facultyAdvisorTemp) {
+                this.facultyAdvisorTemp = facultyAdvisorTemp;
+        }
+
+        public String getSupervisorTemp() {
+                return supervisorTemp;
+        }
+
+        public void setSupervisorTemp(String supervisorTemp) {
+                this.supervisorTemp = supervisorTemp;
         }
 
         public Address getPermanentAddress() {

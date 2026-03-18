@@ -28,11 +28,11 @@ const GridLines = () => (
 );
 
 const StatCard = ({ label, value, icon }) => (
-  <div className="bg-white bg-opacity-[0.07] border border-white border-opacity-10 rounded-xl p-4 backdrop-blur-sm">
+  <div className="bg-white bg-opacity-[0.7] border border-white border-opacity-10 rounded-xl p-4 backdrop-blur-sm">
     <div className="flex items-center gap-3">
       <div className="text-2xl">{icon}</div>
       <div>
-        <p className="text-black text-opacity-40 text-xs tracking-widest uppercase">{label}</p>
+        <p className="text-black text-opacity- text-xs tracking-widest uppercase">{label}</p>
         <p className="text-black font-semibold text-sm mt-0.5">{value}</p>
       </div>
     </div>
@@ -71,6 +71,7 @@ export default function LoginPage() {
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("token", credentialResponse.credential);
         if (selectedRole === "Student")
         {
           const rollNo = data.user.email.split('_')[1].split('@')[0].toUpperCase();

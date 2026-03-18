@@ -18,14 +18,22 @@ public class Courses {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    
     private String rollNo;
 
-    @Column(nullable = false)
+    @Column(name = "course_code", nullable = false)
     private String courseCode;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "course_code", insertable = false, updatable = false)
+    private CourseCatalog courseCatalog;
+
+    @Transient
     private String courseName;
+    @Transient
     private String courseType;
+    @Transient
     private int credit;
+
     private int semester;
     private char grade;
 
@@ -57,15 +65,26 @@ public class Courses {
     }
 
     public String getCourseName() {
-        return courseName;
+        if (courseName != null && !courseName.isEmpty()) return courseName;
+        return courseCatalog != null ? courseCatalog.getCourseName() : null;
     }
 
     public void setCourseName(String courseName) {
         this.courseName = courseName;
     }
 
+    public String getCourseType() {
+        if (courseType != null && !courseType.isEmpty()) return courseType;
+        return courseCatalog != null ? courseCatalog.getCourseType() : null;
+    }
+
+    public void setCourseType(String courseType) {
+        this.courseType = courseType;
+    }
+
     public int getCredit() {
-        return credit;
+        if (credit != 0) return credit;
+        return courseCatalog != null ? courseCatalog.getCredit() : 0;
     }
 
     public void setCredit(int credit) {
@@ -83,33 +102,20 @@ public class Courses {
     public char getGrade() {
         return grade;
     }
+
     public void setGrade(char grade) {
         this.grade = grade;
     }
-    
-        public String getCourseType() {
-            return courseType;
-        }
-    
-        public void setCourseType(String courseType) {
-            this.courseType = courseType;
-        }
 
-        public Courses(Long id, String rollNo, String courseCode, String courseName, String courseType, int credit,
-                int semester, char grade) {
-            this.id = id;
-            this.rollNo = rollNo;
-            this.courseCode = courseCode;
-            this.courseName = courseName;
-            this.courseType = courseType;
-            this.credit = credit;
-            this.semester = semester;
-            this.grade = grade;
-        }
-
-   
-
-
-    
-
+    public Courses(Long id, String rollNo, String courseCode, String courseName, String courseType, int credit,
+                   int semester, char grade) {
+        this.id = id;
+        this.rollNo = rollNo;
+        this.courseCode = courseCode;
+        this.courseName = courseName;
+        this.courseType = courseType;
+        this.credit = credit;
+        this.semester = semester;
+        this.grade = grade;
+    }
 }

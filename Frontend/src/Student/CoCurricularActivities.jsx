@@ -7,7 +7,10 @@ export const CoCurricularActivities = ({ rollNo }) => {
     // Fetch existing activities from backend
     const fetchActivities = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/api/student/cocurricular/${rollNo}`);
+        const response = await fetch(`http://localhost:8080/api/student/cocurricular/${rollNo}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         setActivities(data);
       }
@@ -104,21 +107,42 @@ const handleAddActivity = () => {
 };
 
   const handleSubmit = async () => {
-    const payload = activities.map(item => ({
-      rollNo: rollNo,
-      title: item.title,
-      description: item.description,
-      type: item.type,
-      certificateName: item.certificateName,
-      date: item.date,
-      certificate: ""
-    }));
-
     try {
+      // 1. Pre-upload all certificate files
+      const updatedActivities = await Promise.all(activities.map(async (item) => {
+        let certUrl = item.certificate;
+        if (item.certificate instanceof File) {
+          const fd = new FormData();
+          fd.append('file', item.certificate);
+          const res = await fetch(`http://localhost:8080/api/student/upload/cocurricular`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+            body: fd
+          });
+          if (!res.ok) throw new Error("File upload failed");
+          certUrl = await res.text();
+        }
+        return { ...item, certificate: certUrl };
+      }));
+
+      // 2. Map payload with returned local URLs
+      const payload = updatedActivities.map(item => ({
+        rollNo: rollNo,
+        title: item.title,
+        description: item.description,
+        type: item.type,
+        certificateName: item.certificateName,
+        date: item.date,
+        certificate: item.certificate || ""
+      }));
+
       console.log('Submitting activities with payload:', payload);
       const response = await fetch(`http://localhost:8080/api/student/cocurricular/${rollNo}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify(payload)
       });
 
@@ -126,6 +150,9 @@ const handleAddActivity = () => {
 
       console.log('Successfully submitted!');
       alert('Activities submitted successfully!');
+      
+      // Update state so users can immediately click "View Document" using the fetched DB URL
+      setActivities(updatedActivities);
 
     } catch (error) {
       console.error('Error submitting activities:', error);
@@ -167,10 +194,9 @@ const handleAddActivity = () => {
     if (window.confirm('Are you sure you want to delete this activity?')) {
       console.log(`Attempting to delete activity with title: ${title} for rollNo: ${rollNo}`);
       try {
-        const response = await fetch(`http://localhost:8080/api/student/cocurricular/${rollNo}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: title?title:null
+        const response = await fetch(`http://localhost:8080/api/student/cocurricular/${rollNo}?title=${encodeURIComponent(title)}`, {
+          method: "DELETE",
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
 
         if (!response.ok) throw new Error(`Delete failed: ${response.status}`);
@@ -198,31 +224,13 @@ const handleAddActivity = () => {
     setEditingId(null);
   };
 
-  // Helper to open the Base64 file in a new tab
-  const handleViewCertificate = (certificateBase64, fileName) => {
-    if (!certificateBase64 || typeof certificateBase64 !== 'string') {
+  // Helper to open the saved document in a new tab
+  const handleViewCertificate = (certificatePath) => {
+    if (!certificatePath || typeof certificatePath !== 'string') {
       alert("Please submit the activity first to view the certificate.");
       return;
     }
-
-    try {
-      const isPdf = fileName && fileName.toLowerCase().endsWith('.pdf');
-      const mimeType = isPdf ? 'application/pdf' : 'image/jpeg';
-
-      const byteCharacters = atob(certificateBase64);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: mimeType });
-
-      const fileUrl = URL.createObjectURL(blob);
-      window.open(fileUrl, '_blank');
-    } catch (error) {
-      console.error("Error displaying certificate:", error);
-      alert("Could not load the certificate file.");
-    }
+    window.open(`http://localhost:8080/${certificatePath}`, '_blank');
   };
 
   // Color classes for activity types

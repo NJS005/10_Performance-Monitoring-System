@@ -11,6 +11,10 @@ import com.performance.Monitoring.Modal.Courses;
 import com.performance.Monitoring.Repo.CoRepo;
 import com.performance.Monitoring.Repo.CoursesRepo;
 import com.performance.Monitoring.Repo.AttendaceRepo;
+import com.performance.Monitoring.Repo.CourseCatalogRepo;
+import com.performance.Monitoring.Repo.FacultyRepo;
+import com.performance.Monitoring.Modal.Faculty;
+import com.performance.Monitoring.Modal.CourseCatalog;
 
 import java.util.Set;
 
@@ -30,12 +34,31 @@ public class StudentService {
     private CoursesRepo coursesRepo;
 
     @Autowired
+    private CourseCatalogRepo courseCatalogRepo;
+
+    @Autowired
     private CoRepo coRepo;
 
     @Autowired
     private AttendaceRepo attendanceRepo;
 
+    @Autowired
+    private FacultyRepo facultyRepo;
+
     public void putStudentDetails(Student student) {
+        if (student.getFacultyAdvisorTemp() != null && !student.getFacultyAdvisorTemp().isBlank()) {
+            List<Faculty> faList = facultyRepo.findByNameIgnoreCase(student.getFacultyAdvisorTemp());
+            if (!faList.isEmpty()) {
+                student.setFacultyAdvisorEntity(faList.get(0));
+            }
+        }
+        if (student.getSupervisorTemp() != null && !student.getSupervisorTemp().isBlank()) {
+            List<Faculty> supList = facultyRepo.findByNameIgnoreCase(student.getSupervisorTemp());
+            if (!supList.isEmpty()) {
+                student.setSupervisorEntity(supList.get(0));
+            }
+        }
+
         studentRepo.save(student);
         System.out.println("Fetching and storing student details...");
     }
@@ -86,6 +109,18 @@ public class StudentService {
             String key = course.getCourseCode() + "-" + course.getSemester();
 
             if (!existing.contains(key)) {
+                // Check if catalog exists and insert if not to normalize DB (3NF)
+                if (course.getCourseCode() != null) {
+                    courseCatalogRepo.findById(course.getCourseCode()).orElseGet(() -> {
+                        CourseCatalog catalog = new CourseCatalog(
+                                course.getCourseCode(),
+                                course.getCourseName(),
+                                course.getCourseType(),
+                                course.getCredit()
+                        );
+                        return courseCatalogRepo.save(catalog);
+                    });
+                }
                 course.setRollNo(rollNumber);
                 coursesRepo.save(course);
             }

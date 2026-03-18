@@ -229,7 +229,10 @@ export default function StudentDetailCollection() {
    try {
       const res = await fetch("http://localhost:8080/api/student/details", { 
          method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
         body: JSON.stringify({
           ...formData,
           rollNo: formData.rollNo.toUpperCase(),
@@ -242,7 +245,18 @@ export default function StudentDetailCollection() {
           temporaryAddress: sameAddress ? { ...formData.permanentAddress } : formData.temporaryAddress,
         }),
       });
-      if (res.ok) navigate("/");
+     if (res.ok) {
+       
+        const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+        
+        const updatedUser = { 
+          ...currentUser, 
+          rollno: formData.rollNo.toUpperCase() 
+        };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+
+        navigate("/student", { state: { rollno: formData.rollNo.toUpperCase() } });
+      }
       else alert("Failed to save details. Please try again.");
     } catch (err) {
       console.error(err);

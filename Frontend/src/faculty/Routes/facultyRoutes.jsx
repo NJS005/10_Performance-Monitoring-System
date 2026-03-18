@@ -6,8 +6,8 @@ import StudentReviewPage from "../features/faculty/pages/StudentReviewPage";
 const FacultyRoutes = () => {
   return (
     <Routes>
-      <Route path="dashboard" element={<FacultyDashboard />} />
       <Route path="students" element={<StudentsPage />} />
+      <Route path="dashboard" element={<FacultyDashboard />} />
       <Route path="pending" element={<StudentsPage />} />
       <Route path="review/:studentId" element={<StudentReviewPage />} />
     </Routes>

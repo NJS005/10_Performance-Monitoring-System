@@ -137,48 +137,53 @@ export const AttendanceTracker = ({ courses, rollNo }) => {
 
   const fetchAttendance = async () => {
     try {
-      const res = await fetch(`http://localhost:8080/api/student/attendance/${rollNo}`);
-      const data = await res.json();
-
-      const recordsBySlot = {};
-      data.forEach(record => {
-        recordsBySlot[record.slot] = record;
+      const res = await fetch(`http://localhost:8080/api/student/attendance/${rollNo}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
-      setDbRecordsMap(recordsBySlot);
+      if (res.ok) {
+        const data = await res.json();
 
-      const newAttendance = {};
-      DAYS.forEach(day => {
-        newAttendance[day] = Array(10).fill(null).map(() => ({ attended: 0, total: 0 }));
-      });
-
-      // Only map to today's row — data is totals per slot, not per day
-      data.forEach(record => {
-        timetable[todayDay]?.forEach((slot, index) => {
-          if (slot === record.slot) {
-            newAttendance[todayDay][index] = {
-              attended: record.attendedClasses,
-              total: record.totalClasses
-            };
-          }
-        });
-      });
-
-      setAttendanceData(newAttendance);
-
-      setCourseSettings(prev => {
-        const updated = { ...prev };
+        const recordsBySlot = {};
         data.forEach(record => {
-          if (updated[record.slot]) {
-            updated[record.slot] = {
-              ...updated[record.slot],
-              displayName: record.courseName || record.slot,
-              requiredPercentage: record.attendanceRequirement ?? updated[record.slot].requiredPercentage,
-              enabled: record.isEnabled === 0 ? false : (updated[record.slot].enabled ?? true)
-            };
-          }
+          recordsBySlot[record.slot] = record;
         });
-        return updated;
-      });
+        setDbRecordsMap(recordsBySlot);
+
+        const newAttendance = {};
+        DAYS.forEach(day => {
+          newAttendance[day] = Array(10).fill(null).map(() => ({ attended: 0, total: 0 }));
+        });
+
+        // Only map to today's row — data is totals per slot, not per day
+        data.forEach(record => {
+          timetable[todayDay]?.forEach((slot, index) => {
+            if (slot === record.slot) {
+              newAttendance[todayDay][index] = {
+                attended: record.attendedClasses,
+                total: record.totalClasses
+              };
+            }
+          });
+        });
+
+        setAttendanceData(newAttendance);
+
+        setCourseSettings(prev => {
+          const updated = { ...prev };
+          data.forEach(record => {
+            if (updated[record.slot]) {
+              updated[record.slot] = {
+                ...updated[record.slot],
+                displayName: record.courseName || record.slot,
+                requiredPercentage: record.attendanceRequirement ?? updated[record.slot].requiredPercentage,
+                enabled: record.isEnabled === 0 ? false : (updated[record.slot].enabled ?? true)
+              };
+            }
+          });
+          return updated;
+        });
+      }
+
 
     } catch (err) {
       console.error("Failed to fetch attendance", err);
@@ -350,14 +355,47 @@ export const AttendanceTracker = ({ courses, rollNo }) => {
         };
       });
       console.log('Saving attendance with payload:', payload);
+
+      const todayClasses = [];
+      const tday = getTodayDayName();
+      timetable[tday]?.forEach((slot, index) => {
+        if (slot && slot !== 'BREAK' && slot.trim() !== '') {
+          const data = attendanceData[tday]?.[index];
+          if (data && data.total > 0) {
+            todayClasses.push(data.attended === data.total);
+          } else {
+            todayClasses.push(null);
+          }
+        }
+      });
+      // Pad to 6
+      while (todayClasses.length < 6) todayClasses.push(null);
+      const dailyPayload = {
+        slot1: todayClasses[0], slot2: todayClasses[1], slot3: todayClasses[2],
+        slot4: todayClasses[3], slot5: todayClasses[4], slot6: todayClasses[5]
+      };
+
     try {
       const res = await fetch(`http://localhost:8080/api/student/attendance/${rollNo}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) throw new Error('Save failed');
+
+      // Also fire the Daily Tracker API:
+      await fetch(`http://localhost:8080/api/student/daily-attendance/${rollNo}`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(dailyPayload),
+      });
 
       const saved = await res.json().catch(() => null);
       if (Array.isArray(saved)) {

@@ -380,6 +380,32 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
   const [autoFillFlash,     setAutoFillFlash]     = useState([]);
   const [isSubmitting,      setIsSubmitting]      = useState(false);
   const [submitStatus,      setSubmitStatus]      = useState(null); // 'success' | 'error' | null
+  const [fetchedPDFPath,    setFetchedPDFPath]    = useState(null);
+
+  // When activeSemester or rollNo changes, fetch verification
+  React.useEffect(() => {
+    if (!rollNo || !activeSemester) return;
+    const fetchVerification = async () => {
+      try {
+        const res = await fetch(`http://localhost:8080/api/student/courses/verification/${rollNo}?semester=${activeSemester}`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.document) {
+            setFetchedPDFPath(data.document);
+            setPdfFileName('Existing Document.pdf');
+            return;
+          }
+        }
+        setFetchedPDFPath(null);
+        setPdfFileName('');
+      } catch (err) {
+        console.error('Failed to fetch verification doc', err);
+      }
+    };
+    fetchVerification();
+  }, [rollNo, activeSemester]);
 
 
   // ── Semester helpers ───────────────────────────────────────────────────────
@@ -517,7 +543,10 @@ const getAllSemesters = () => {
       // 1 — Course data as JSON
       const courseRes = await fetch(`http://localhost:8080/api/student/courses/${rollNo}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify(cleanCoursesPayload),
       });
       if (!courseRes.ok) throw new Error(`Course submission failed: ${courseRes.status}`);
@@ -528,7 +557,11 @@ const getAllSemesters = () => {
         fd.append('pdf', uploadedPDF);
         fd.append('rollNo', rollNo || '');
         fd.append('semester', String(activeSemester || ''));
-        const pdfRes = await fetch('http://localhost:8081/api/student/courses/upload-pdf', { method: 'POST', body: fd });
+        const pdfRes = await fetch('http://localhost:8080/api/student/courses/upload-pdf', { 
+          method: 'POST', 
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+          body: fd 
+        });
         if (!pdfRes.ok) throw new Error(`PDF upload failed: ${pdfRes.status}`);
       }
 
@@ -752,7 +785,7 @@ const getAllSemesters = () => {
             </svg>
             Attach {showSemester === 'all' && activeSemester ? `Semester ${activeSemester}` : 'Current Semester'} Grade Card (PDF)
           </p>
-          {!uploadedPDF ? (
+          {!uploadedPDF && !fetchedPDFPath ? (
             <>
               <input type="file" accept="application/pdf" onChange={handlePDFUpload} className="hidden" id="pdf-upload" />
               <label htmlFor="pdf-upload"
@@ -772,14 +805,24 @@ const getAllSemesters = () => {
                 </svg>
                 <div>
                   <p className="font-semibold text-gray-900 text-sm">{pdfFileName}</p>
-                  <p className="text-xs text-gray-500">Will be sent with verification request</p>
+                  <p className="text-xs text-gray-500">
+                     {fetchedPDFPath ? 'Currently saved verification document' : 'Will be sent with verification request'}
+                  </p>
                 </div>
               </div>
-              <button onClick={removePDF} className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                {fetchedPDFPath && (
+                  <button onClick={() => window.open(`http://localhost:8080/${fetchedPDFPath}`)} 
+                    className="text-indigo-600 hover:text-indigo-800 p-2 hover:bg-indigo-50 rounded-lg transition-colors font-semibold text-sm">
+                    View Doc
+                  </button>
+                )}
+                <button onClick={() => { removePDF(); setFetchedPDFPath(null); }} className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-colors">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
           )}
           <p className="text-xs text-gray-500 mt-2">Optional — your advisor will use this to verify your grades</p>

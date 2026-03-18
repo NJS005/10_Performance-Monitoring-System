@@ -24,7 +24,7 @@ public class CoCurricular {
     private String certificateName;
     private String date;
 
-    private byte[] certificate;
+    private String certificate;
 
     public CoCurricular() {
     }
@@ -87,16 +87,16 @@ public class CoCurricular {
         this.date = date;
     }
 
-    public byte[] getCertificate() {
+    public String getCertificate() {
         return certificate;
     }
 
-    public void setCertificate(byte[] certificate) {
+    public void setCertificate(String certificate) {
         this.certificate = certificate;
     }
 
     public CoCurricular(Long idd, String rollNo, String title, String description, String type,
-            String certificateName, String date, byte[] certificate) {
+            String certificateName, String date, String certificate) {
         this.idd = idd;
         this.rollNo = rollNo;
         this.title = title;

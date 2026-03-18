@@ -22,8 +22,7 @@ public class CourseVerification {
     private int semester;
     private String verificationStatus;
 
-    @Lob
-    private byte[] document;
+    private String document;
 
     public CourseVerification() {
     }
@@ -60,15 +59,15 @@ public class CourseVerification {
         this.verificationStatus = verificationStatus;
     }
 
-    public byte[] getDocument() {
+    public String getDocument() {
         return document;
     }
 
-    public void setDocument(byte[] document) {
+    public void setDocument(String document) {
         this.document = document;
     }
 
-    public CourseVerification(Long id, String rollNo, int semester, String verificationStatus, byte[] document) {
+    public CourseVerification(Long id, String rollNo, int semester, String verificationStatus, String document) {
         this.id = id;
         this.rollNo = rollNo;
         this.semester = semester;
