@@ -148,8 +148,10 @@ async getStudentDetails(studentId) {
     return data.map((c) => ({
       code: c.courseCode,
       name: c.courseName,
+      courseType: c.courseType,
       credits: c.credit,
-      grade: c.grade
+      grade: c.grade,
+      semester: c.semester,
     }));
   },
 
