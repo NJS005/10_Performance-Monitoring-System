@@ -197,8 +197,17 @@ async getStudentDetails(studentId) {
       const errText = await res.text();
       throw new Error(errText || "Failed to fetch dashboard stats");
     }
+    const raw = await res.json();
 
-    return res.json();
+    // Normalize recentSubmissions so UI can rely on id, avatar, rollNumber, status, etc.
+    const recentSubmissions = Array.isArray(raw.recentSubmissions)
+      ? raw.recentSubmissions.map(mapStudent)
+      : [];
+
+    return {
+      ...raw,
+      recentSubmissions,
+    };
   },
 
   // Approve student

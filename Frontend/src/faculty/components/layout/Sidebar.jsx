@@ -1,7 +1,11 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { useDashboardStats } from '../../features/faculty/hooks/useStudents';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
+  const { data: stats } = useDashboardStats();
+  const pendingCount = stats?.pending || 0;
+
   const navigation = [
     {
       name: 'Dashboard',
@@ -29,7 +33,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
-      badge: '12'
+      badge: pendingCount > 0 ? String(pendingCount) : null
     }
   ];
 
