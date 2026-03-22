@@ -5,19 +5,7 @@ import { useNavigate } from "react-router-dom";
 const PROGRAMS = ["B.Tech", "B.Arch", "M.Tech", "PhD", "BSc", "MSc", "Integrated"];
 const UG_PROGRAMS = ["B.Tech", "B.Arch"];
 const FACULTY_PROGRAMS = ["B.Tech", "B.Arch", "M.Tech"];
-const DEPARTMENTS = [
-  { code: "CS", label: "CS – Computer Science" },
-  { code: "EC", label: "EC – Electronics & Communication" },
-  { code: "EE", label: "EE – Electrical Engineering" },
-  { code: "ME", label: "ME – Mechanical Engineering" },
-  { code: "CE", label: "CE – Civil Engineering" },
-  { code: "CH", label: "CH – Chemical Engineering" },
-  { code: "PE", label: "PE – Production Engineering" },
-  { code: "MT", label: "MT – Materials Science" },
-  { code: "BT", label: "BT – Biotechnology" },
-  { code: "EP", label: "EP – Engineering Physics" },
-  { code: "AR", label: "AR – Architecture" },
-];
+// DEPARTMENTS are now fetched dynamically
 
 const dropdownArrow = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`;
 
@@ -139,6 +127,16 @@ export default function StudentDetailCollection() {
   const [errors, setErrors] = useState({});
   const [sameAddress, setSameAddress] = useState(false);
 
+  const [departments, setDepartments] = useState([]);
+  const [facultyList, setFacultyList] = useState([]);
+
+  useEffect(() => {
+    fetch("http://localhost:8080/api/public/departments")
+      .then(res => res.json())
+      .then(data => setDepartments(data))
+      .catch(err => console.error(err));
+  }, []);
+
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   const [formData, setFormData] = useState({
@@ -158,6 +156,18 @@ export default function StudentDetailCollection() {
   });
 
   useEffect(() => { setTimeout(() => setMounted(true), 50); }, []);
+
+  // Fetch faculty dynamically based on chosen department code
+  useEffect(() => {
+    if (formData.department) {
+      fetch(`http://localhost:8080/api/public/faculty?department=${formData.department}`)
+        .then(res => res.json())
+        .then(data => setFacultyList(data))
+        .catch(err => console.error(err));
+    } else {
+      setFacultyList([]);
+    }
+  }, [formData.department]);
 
   // Mirror permanent → temporary when checkbox is ticked
   useEffect(() => {
@@ -350,32 +360,24 @@ export default function StudentDetailCollection() {
                   <SelectField
                     label="Program" value={formData.program} required error={errors.program}
                     options={PROGRAMS}
-                    onChange={(v) => { handleChange("program", v); handleChange("department", ""); }}
+                    onChange={(v) => { handleChange("program", v); handleChange("department", ""); handleChange(advisorField, ""); }}
                   />
-                  {isUGProgram ? (
-                    <SelectField
-                      label="Department" value={formData.department} required error={errors.department}
-                      options={DEPARTMENTS.map((d) => ({ value: d.code, label: d.label }))}
-                      onChange={(v) => handleChange("department", v)}
-                    />
-                  ) : (
-                    <InputField
-                      label="Department / School" value={formData.department}
-                      onChange={(v) => handleChange("department", v)}
-                      placeholder="e.g. Computer Science" required error={errors.department}
-                    />
-                  )}
+                  <SelectField
+                    label="Department / School" value={formData.department} required error={errors.department}
+                    options={departments.map((d) => ({ value: d.code, label: `${d.code} - ${d.name}` }))}
+                    onChange={(v) => { handleChange("department", v); handleChange(advisorField, ""); }}
+                  />
                 </div>
 
                 {/* Faculty Advisor / Supervisor */}
-                {formData.program && (
+                {formData.program && formData.department && (
                   <>
-                    <InputField
+                    <SelectField
                       label={advisorLabel}
                       value={formData[advisorField]}
                       onChange={(v) => handleChange(advisorField, v)}
-                      placeholder={`Name of your ${advisorLabel}`}
                       required error={errors[advisorField]}
+                      options={facultyList.map((f) => ({ value: f.name, label: f.name }))}
                     />
                     {/* Indicator pill */}
                     <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)", borderRadius: "20px", padding: "5px 12px", alignSelf: "flex-start" }}>

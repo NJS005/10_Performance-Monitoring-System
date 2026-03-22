@@ -1,390 +1,478 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Search, Loader2, X, Edit2 } from 'lucide-react';
+import { Plus, Trash2, Search, Loader2, X, Edit2, Database, Users, BookOpen, Building } from 'lucide-react';
+
+// 1. THE BRAIN: This config object tells the UI how to render every table.
+// Add a new block here, and the UI will automatically build the page for it!
+const tableConfigs = {
+  users: {
+    name: "System Users",
+    icon: <Users className="w-5 h-5" />,
+    endpoint: "users",
+    idField: "id",
+    columns: [
+      { key: "name", label: "Name" },
+      { key: "email", label: "Email" },
+      { key: "role", label: "Role" },
+      { key: "department", label: "Department" },
+      { key: "designation", label: "Designation" },
+      { key: "contactNo", label: "Contact No" }
+    ],
+    formFields: [
+      { name: "name", label: "Full Name", type: "text", required: true },
+      { name: "email", label: "Email Address", type: "email", required: true },
+      { name: "role", label: "Role", type: "select", options: ["Admin", "Faculty Advisor", "Student"], required: true },
+      { name: "department", label: "Department (Code)", type: "select", options: ["CS", "EC", "EE", "ME", "CE", "CH", "PE", "MT", "BT", "EP", "AR", "Admin/Staff"], required: false },
+      { name: "designation", label: "Designation", type: "text", required: false },
+      { name: "contactNo", label: "Contact No", type: "number", required: false }
+    ]
+  },
+  faculty: {
+    name: "Faculty",
+    icon: <Users className="w-5 h-5" />,
+    endpoint: "admin/faculty",
+    idField: "id",
+    columns: [
+      { key: "id", label: "ID" },
+      { key: "name", label: "Name" },
+      { key: "email", label: "Email" },
+      { key: "department", label: "Department" },
+      { key: "designation", label: "Designation" },
+      { key: "contactNo", label: "Contact No" }
+    ],
+    formFields: [
+      { name: "name", label: "Full Name", type: "text", required: true },
+      { name: "email", label: "Email Address", type: "email", required: true },
+      { name: "department", label: "Department (Code)", type: "select", options: ["CS", "EC", "EE", "ME", "CE", "CH", "PE", "MT", "BT", "EP", "AR"], required: true },
+      { name: "designation", label: "Designation", type: "text", required: true },
+      { name: "contactNo", label: "Contact No", type: "number", required: true }
+    ]
+  },
+  students: {
+    name: "Students",
+    icon: <BookOpen className="w-5 h-5" />,
+    endpoint: "admin/students",
+    idField: "rollNo", // Students use rollNo as their primary key
+    columns: [
+      { key: "rollNo", label: "Roll Number" },
+      { key: "name", label: "Name" },
+      { key: "department", label: "Department" },
+      { key: "program", label: "Program" },
+      { key: "batch", label: "Batch" },
+      { key: "contactNo", label: "Contact No" },
+      { key: "verificationStatus", label: "Verification" }
+    ],
+    formFields: [
+      { name: "rollNo", label: "Roll Number", type: "text", required: true },
+      { name: "name", label: "Full Name", type: "text", required: true },
+      { name: "department", label: "Department Code", type: "select", options: ["CS", "EC", "EE", "ME", "CE", "CH", "PE", "MT", "BT", "EP", "AR"], required: true },
+      { name: "program", label: "Program", type: "select", options: ["B.Tech", "B.Arch", "M.Tech", "PhD", "BSc", "MSc", "Integrated"], required: true },
+      { name: "batch", label: "Batch Year", type: "number", required: true },
+      { name: "contactNo", label: "Contact No", type: "number", required: true }
+    ]
+  },
+  departments: {
+    name: "Departments",
+    icon: <Building className="w-5 h-5" />,
+    endpoint: "admin/departments",
+    idField: "id",
+    columns: [
+      { key: "code", label: "Dept Code" },
+      { key: "name", label: "Department Name" }
+    ],
+    formFields: [
+      { name: "code", label: "Department Code", type: "text", required: true },
+      { name: "name", label: "Department Name", type: "text", required: true }
+    ]
+  },
+  courses: {
+    name: "Student Courses",
+    icon: <BookOpen className="w-5 h-5" />,
+    endpoint: "admin/courses",
+    idField: "id",
+    columns: [
+      { key: "rollNo", label: "Roll Number" },
+      { key: "courseCode", label: "Course Code" },
+      { key: "semester", label: "Semester" },
+      { key: "grade", label: "Grade" }
+    ],
+    formFields: [
+      { name: "rollNo", label: "Roll Number", type: "text", required: true },
+      { name: "courseCode", label: "Course Code", type: "text", required: true },
+      { name: "semester", label: "Semester", type: "number", required: true },
+      { name: "grade", label: "Grade", type: "text", required: true }
+    ]
+  },
+  coursecatalog: {
+    name: "Course Catalog",
+    icon: <BookOpen className="w-5 h-5" />,
+    endpoint: "admin/coursecatalog",
+    idField: "courseCode",
+    columns: [
+      { key: "courseCode", label: "Course Code" },
+      { key: "courseName", label: "Course Name" },
+      { key: "courseType", label: "Type" },
+      { key: "credit", label: "Credits" }
+    ],
+    formFields: [
+      { name: "courseCode", label: "Course Code", type: "text", required: true },
+      { name: "courseName", label: "Course Name", type: "text", required: true },
+      { name: "courseType", label: "Course Type", type: "text", required: true },
+      { name: "credit", label: "Credits", type: "number", required: true }
+    ]
+  },
+  attendance: {
+    name: "Attendance",
+    icon: <Users className="w-5 h-5" />,
+    endpoint: "admin/attendance",
+    idField: "id",
+    columns: [
+      { key: "rollNo", label: "Roll Number" },
+      { key: "courseName", label: "Course Name" },
+      { key: "semester", label: "Semester" },
+      { key: "slot", label: "Slot" },
+      { key: "attendedClasses", label: "Attended" },
+      { key: "totalClasses", label: "Total" },
+      { key: "attendanceRequirement", label: "Req (%)" }
+    ],
+    formFields: [
+      { name: "rollNo", label: "Roll Number", type: "text", required: true },
+      { name: "semester", label: "Semester", type: "number", required: true },
+      { name: "slot", label: "Slot", type: "text", required: true },
+      { name: "courseName", label: "Course Name", type: "text", required: false },
+      { name: "attendedClasses", label: "Attended Classes", type: "number", required: true },
+      { name: "totalClasses", label: "Total Classes", type: "number", required: true },
+      { name: "attendanceRequirement", label: "Attendance Req (%)", type: "number", required: true }
+    ]
+  },
+  dailyattendance: {
+    name: "Daily Attendance",
+    icon: <Users className="w-5 h-5" />,
+    endpoint: "admin/dailyattendance",
+    idField: "id",
+    columns: [
+      { key: "rollNo", label: "Roll Number" },
+      { key: "slot1", label: "Slot 1" },
+      { key: "slot2", label: "Slot 2" },
+      { key: "slot3", label: "Slot 3" },
+      { key: "slot4", label: "Slot 4" },
+      { key: "slot5", label: "Slot 5" },
+      { key: "slot6", label: "Slot 6" }
+    ],
+    formFields: [
+      { name: "rollNo", label: "Roll Number", type: "text", required: true }
+    ]
+  },
+  cocurricular: {
+    name: "Co-Curricular",
+    icon: <Building className="w-5 h-5" />,
+    endpoint: "admin/cocurricular",
+    idField: "idd",
+    columns: [
+      { key: "rollNo", label: "Roll Number" },
+      { key: "title", label: "Title" },
+      { key: "type", label: "Type" },
+      { key: "date", label: "Date" }
+    ],
+    formFields: [
+      { name: "rollNo", label: "Roll Number", type: "text", required: true },
+      { name: "title", label: "Title", type: "text", required: true },
+      { name: "description", label: "Description", type: "text", required: false },
+      { name: "type", label: "Type", type: "text", required: true },
+      { name: "certificateName", label: "Certificate Name", type: "text", required: false },
+      { name: "date", label: "Date", type: "text", required: true }
+    ]
+  },
+  courseverification: {
+    name: "Course Verification",
+    icon: <BookOpen className="w-5 h-5" />,
+    endpoint: "admin/courseverification",
+    idField: "id",
+    columns: [
+      { key: "rollNo", label: "Roll Number" },
+      { key: "semester", label: "Semester" },
+      { key: "verificationStatus", label: "Status" }
+    ],
+    formFields: [
+      { name: "rollNo", label: "Roll Number", type: "text", required: true },
+      { name: "semester", label: "Semester", type: "number", required: true },
+      { name: "verificationStatus", label: "Status", type: "text", required: true }
+    ]
+  }
+};
 
 export default function AdminPanel() {
-  // --- Layout State ---
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
-  // --- Data & UI State ---
-  const [users, setUsers] = useState([]);
+  // --- Core State ---
+  const [activeTab, setActiveTab] = useState('users');
+  const [data, setData] = useState([]);
+  const [departmentOptions, setDepartmentOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // --- Modal State ---
+  // --- UI State ---
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState(null); // null = Adding, object = Editing
-  const [selectedFormRole, setSelectedFormRole] = useState(''); // Controls conditional faculty fields
+  const [editingRecord, setEditingRecord] = useState(null);
 
-  // 1. Fetch Users
-  const fetchUsers = async () => {
+  const activeConfig = tableConfigs[activeTab];
+
+  // --- API Helpers ---
+  const getHeaders = () => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+  });
+
+  const fetchTableData = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:8080/api/users/all', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      }); 
-      if (response.ok) {
-        const data = await response.json();
-        setUsers(data);
+      // Dynamically calls /api/users, /api/students, etc.
+      const res = await fetch(`http://localhost:8080/api/${activeConfig.endpoint}`, { headers: getHeaders() });
+      if (res.ok) {
+        const result = await res.json();
+        setData(result);
       }
     } catch (error) {
-      console.error("Error connecting to server:", error);
+      console.error("Fetch error:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Re-fetch data whenever the user clicks a different table in the sidebar
   useEffect(() => {
-    fetchUsers();
+    fetchTableData();
+    setSearchQuery('');
+  }, [activeTab]);
+
+  // Fetch dynamic departments on mount
+  useEffect(() => {
+    fetch('http://localhost:8080/api/public/departments')
+      .then(res => res.ok ? res.json() : [])
+      .then(deps => setDepartmentOptions(deps.map(d => d.code)))
+      .catch(err => console.error("Error fetching departments:", err));
   }, []);
 
-  // 2. Delete User
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this user? This will also remove their faculty access if applicable.")) return;
+  // --- Action Handlers ---
+  const handleDelete = async (record) => {
+    const id = record[activeConfig.idField]; // Smartly grabs 'id' or 'rollNo'
+    if (!window.confirm(`Are you sure you want to delete this ${activeConfig.name.slice(0, -1)}?`)) return;
+    
     try {
-      const response = await fetch(`http://localhost:8080/api/users/${id}`, { 
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      const res = await fetch(`http://localhost:8080/api/${activeConfig.endpoint}/${id}`, { 
+        method: 'DELETE', headers: getHeaders() 
       });
-      if (response.ok) {
-        setUsers(users.filter(user => user.id !== id));
+      if (res.ok) {
+        setData(data.filter(item => item[activeConfig.idField] !== id));
       } else {
-        alert("Failed to delete user.");
+        alert("Failed to delete record.");
       }
     } catch (error) {
-      console.error("Error deleting:", error);
+      console.error("Delete error:", error);
     }
   };
 
-  // 3. Add / Edit User Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const role = e.target.role.value;
     
-    // Base data for User table
-    const formData = {
-      name: e.target.name.value,
-      email: e.target.email.value,
-      role: role
-    };
+    // Dynamically build the payload based on the config's formFields
+    const formData = {};
+    activeConfig.formFields.forEach(field => {
+      formData[field.name] = e.target[field.name].value;
+    });
 
-    // Attach extra fields if they are a Faculty Advisor
-    if (role === 'Faculty Advisor') {
-      formData.department = e.target.department?.value || '';
-      formData.designation = e.target.designation?.value || '';
-      formData.contactNo = e.target.contactNo?.value || '';
-    }
-
-    // Determine if we are updating or creating
-    const url = editingUser 
-      ? `http://localhost:8080/api/users/${editingUser.id}` 
-      : `http://localhost:8080/api/users`;
-    const method = editingUser ? 'PUT' : 'POST';
+    const isEditing = !!editingRecord;
+    const id = isEditing ? editingRecord[activeConfig.idField] : '';
+    const url = isEditing 
+      ? `http://localhost:8080/api/${activeConfig.endpoint}/${id}` 
+      : `http://localhost:8080/api/${activeConfig.endpoint}`;
+    const method = isEditing ? 'PUT' : 'POST';
 
     try {
-      const response = await fetch(url, {
-        method: method,
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('token')}`
-        },
+      const res = await fetch(url, {
+        method,
+        headers: getHeaders(),
         body: JSON.stringify(formData)
       });
 
-      if (response.ok) {
-        fetchUsers(); // Refresh table
-        closeModal(); // Clean up and close
+      if (res.ok) {
+        fetchTableData();
+        closeModal();
       } else {
-        alert(`Failed to ${editingUser ? 'update' : 'create'} user.`);
+        alert("Failed to save record.");
       }
     } catch (error) {
-      console.error("Error saving:", error);
+      console.error("Save error:", error);
     }
   };
 
-  // Helper to cleanly open the modal for Adding
-  const openAddModal = () => {
-    setEditingUser(null);
-    setSelectedFormRole('');
+  const openModal = (record = null) => {
+    setEditingRecord(record);
     setIsModalOpen(true);
   };
 
-  // Helper to cleanly open the modal for Editing
-  const openEditModal = (user) => {
-    setEditingUser(user);
-    setSelectedFormRole(user.role || '');
-    setIsModalOpen(true);
-  };
-
-  // Helper to cleanly close the modal
   const closeModal = () => {
     setIsModalOpen(false);
-    setEditingUser(null);
-    setSelectedFormRole('');
+    setEditingRecord(null);
   };
 
-  // 4. Search Filter
-  const filteredUsers = users.filter(user => {
-    const query = searchQuery.toLowerCase();
-    return (
-      (user.name && user.name.toLowerCase().includes(query)) ||
-      (user.email && user.email.toLowerCase().includes(query)) ||
-      (user.role && user.role.toLowerCase().includes(query))
-    );
+  // --- Filtering ---
+  const filteredData = data.filter(item => {
+    if (!searchQuery) return true;
+    // Search across all configured columns for the active table
+    return activeConfig.columns.some(col => {
+      const val = item[col.key];
+      return val && val.toString().toLowerCase().includes(searchQuery.toLowerCase());
+    });
   });
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
-      {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 bg-white shadow-sm z-20 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">AMS</span>
-          </div>
-          <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
-        </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-gray-600">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {isMobileMenuOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
-          </svg>
-        </button>
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Mobile Header (simplified for brevity) */}
+      <div className="lg:hidden fixed top-0 w-full bg-white shadow-sm z-20 p-4 flex justify-between">
+        <h1 className="font-bold text-gray-900">Admin Panel</h1>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>Menu</button>
       </div>
 
-      {/* Sidebar Layout */}
-      <aside className={`fixed top-0 left-0 z-30 h-screen transition-transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} bg-white shadow-lg w-64 flex flex-col`}>
-        <div className="px-6 py-6 border-b border-gray-200 mt-12 lg:mt-0">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold">AMS</span>
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
-              <p className="text-xs text-gray-500">System Management</p>
-            </div>
-          </div>
+      {/* Dynamic Sidebar */}
+      <aside className={`fixed top-0 left-0 z-30 h-screen transition-transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} bg-white border-r border-gray-200 w-64 flex flex-col`}>
+        <div className="p-6 border-b border-gray-100 flex items-center gap-3">
+          <Database className="w-8 h-8 text-blue-600" />
+          <h1 className="text-xl font-bold text-gray-800">System Admin</h1>
         </div>
-        <nav className="flex-1 px-4 py-6 space-y-1">
-          <div className="w-full flex items-center space-x-3 px-3 py-3 rounded-lg bg-blue-50 text-blue-700 font-medium cursor-pointer">
-             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-             </svg>
-             <span>User Management</span>
-          </div>
+        <nav className="p-4 space-y-2">
+          {Object.entries(tableConfigs).map(([key, config]) => (
+            <button
+              key={key}
+              onClick={() => { setActiveTab(key); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${
+                activeTab === key ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              {config.icon}
+              <span className="font-medium">{config.name}</span>
+            </button>
+          ))}
         </nav>
       </aside>
 
-      {/* Main Content Area */}
-      <main className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : 'lg:ml-0'} pt-16 lg:pt-0`}>
-        <div className="p-4 sm:p-8 min-h-screen space-y-6">
-          
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-900">User Management Dashboard</h1>
-            <p className="text-gray-500">View, search, add, edit, and remove system users.</p>
+      {/* Main Content */}
+      <main className="flex-1 lg:ml-64 p-8 pt-20 lg:pt-8 transition-all">
+        <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Manage {activeConfig.name}</h2>
+            <p className="text-gray-500">View, add, edit, and delete records.</p>
           </div>
+          <button
+            onClick={() => openModal()}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl shadow-sm transition-all font-semibold"
+          >
+            <Plus className="w-5 h-5" /> Add New
+          </button>
+        </div>
 
-          {/* Top Bar: Search & Add Button */}
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="relative w-full sm:w-96">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search by name, email, or role..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 outline-none transition-all"
-              />
-            </div>
-            <button
-              onClick={openAddModal}
-              className="flex w-full sm:w-auto items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl shadow-md transition-all font-semibold"
-            >
-              <Plus className="w-5 h-5" />
-              <span>Add User</span>
-            </button>
-          </div>
+        {/* Search Bar */}
+        <div className="mb-6 relative w-full sm:w-96">
+          <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search records..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 outline-none"
+          />
+        </div>
 
-          {/* Users Table */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="text-left px-6 py-4 text-sm font-bold text-gray-700">Name</th>
-                    <th className="text-left px-6 py-4 text-sm font-bold text-gray-700">Email</th>
-                    <th className="text-left px-6 py-4 text-sm font-bold text-gray-700">Role</th>
-                    <th className="text-right px-6 py-4 text-sm font-bold text-gray-700">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {isLoading ? (
-                    <tr>
-                      <td colSpan="4" className="px-6 py-12 text-center text-gray-500">
-                        <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-500 mb-2" />
-                        Loading users...
+        {/* Dynamic Table */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  {activeConfig.columns.map(col => (
+                    <th key={col.key} className="px-6 py-4 text-sm font-semibold text-gray-600">
+                      {col.label}
+                    </th>
+                  ))}
+                  <th className="px-6 py-4 text-sm font-semibold text-gray-600 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {isLoading ? (
+                  <tr><td colSpan="100%" className="p-8 text-center text-gray-500"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></td></tr>
+                ) : filteredData.length === 0 ? (
+                  <tr><td colSpan="100%" className="p-8 text-center text-gray-500">No records found.</td></tr>
+                ) : (
+                  filteredData.map((item, idx) => (
+                    <tr key={item[activeConfig.idField] || idx} className="hover:bg-gray-50">
+                      {activeConfig.columns.map(col => {
+                        const val = item[col.key];
+                        const displayVal = typeof val === 'object' && val !== null ? (val.name || val.code || JSON.stringify(val)) : val;
+                        return (
+                          <td key={col.key} className="px-6 py-4 text-gray-800">
+                            {displayVal}
+                          </td>
+                        );
+                      })}
+                      <td className="px-6 py-4 text-right flex justify-end gap-2">
+                        <button onClick={() => openModal(item)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleDelete(item)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </td>
                     </tr>
-                  ) : filteredUsers.length === 0 ? (
-                    <tr>
-                      <td colSpan="4" className="px-6 py-12 text-center text-gray-500">
-                        No users found.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 font-medium text-gray-900">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold">
-                              {user.name ? user.name.charAt(0).toUpperCase() : '?'}
-                            </div>
-                            <span>{user.name}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-gray-600">{user.email}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-lg text-sm font-medium ${
-                            user.role === 'Admin' ? 'bg-purple-100 text-purple-700' :
-                            user.role === 'Student' ? 'bg-green-100 text-green-700' :
-                            'bg-blue-100 text-blue-700'
-                          }`}>
-                            {user.role || 'Unassigned'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end space-x-2">
-                            {/* Edit Button */}
-                            <button 
-                              onClick={() => openEditModal(user)} 
-                              className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
-                              title="Edit User"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            {/* Delete Button */}
-                            <button 
-                              onClick={() => handleDelete(user.id)} 
-                              className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
-                              title="Delete User"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-
         </div>
       </main>
 
-      {/* Add / Edit User Modal */}
+      {/* Dynamic Modal Form */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scaleIn">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
             <div className="flex justify-between items-center p-6 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900">
-                {editingUser ? 'Edit User' : 'Add New User'}
-              </h2>
-              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 transition-colors">
-                <X className="w-5 h-5" />
-              </button>
+              <h3 className="text-xl font-bold text-gray-900">
+                {editingRecord ? 'Edit' : 'Add'} {activeConfig.name.slice(0, -1)}
+              </h3>
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
             </div>
             
-            <form key={editingUser ? editingUser.id : 'new'} onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                <input 
-                  type="text" 
-                  name="name" 
-                  defaultValue={editingUser?.name || ''} 
-                  required 
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all" 
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                <input 
-                  type="email" 
-                  name="email" 
-                  defaultValue={editingUser?.email || ''} 
-                  required 
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all" 
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                <select 
-                  name="role" 
-                  defaultValue={editingUser?.role || ''} 
-                  onChange={(e) => setSelectedFormRole(e.target.value)}
-                  required 
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all"
-                >
-                  <option value="">Select a role</option>
-                  <option value="Admin">Admin</option>
-                  <option value="Faculty Advisor">Faculty Advisor</option>
-                  <option value="Student">Student</option>
-                </select>
-              </div>
-
-              {/* CONDITIONALLY RENDERED FACULTY FIELDS */}
-              {selectedFormRole === 'Faculty Advisor' && (
-                <div className="space-y-4 pt-4 border-t border-gray-100 mt-4">
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Faculty Details</p>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                    <input 
-                      type="text" 
-                      name="department" 
-                      placeholder="e.g. Computer Science" 
-                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 focus:border-blue-500 outline-none" 
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              {activeConfig.formFields.map(field => (
+                <div key={field.name}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}</label>
+                  
+                  {field.type === 'select' ? (
+                    <select
+                      name={field.name}
+                      defaultValue={editingRecord ? (typeof editingRecord[field.name] === 'object' && editingRecord[field.name] !== null ? (editingRecord[field.name].code || editingRecord[field.name].name) : editingRecord[field.name]) : ''}
+                      required={field.required}
+                      className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-blue-500 outline-none"
+                    >
+                      <option value="">Select...</option>
+                      {(field.name === 'department' ? departmentOptions : field.options).map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                  ) : (
+                    <input
+                      type={field.type}
+                      name={field.name}
+                      defaultValue={editingRecord ? (typeof editingRecord[field.name] === 'object' && editingRecord[field.name] !== null ? (editingRecord[field.name].code || editingRecord[field.name].name) : editingRecord[field.name]) : ''}
+                      required={field.required}
+                      // If editing a primary key (like rollNo), disable the input so they can't change it
+                      disabled={editingRecord && field.name === activeConfig.idField}
+                      className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-500"
                     />
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Designation</label>
-                      <input 
-                        type="text" 
-                        name="designation" 
-                        placeholder="e.g. Professor" 
-                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 focus:border-blue-500 outline-none" 
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Contact No.</label>
-                      <input 
-                        type="number" 
-                        name="contactNo" 
-                        placeholder="10-digit number" 
-                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 focus:border-blue-500 outline-none" 
-                      />
-                    </div>
-                  </div>
+                  )}
                 </div>
-              )}
-
-              <div className="pt-6 flex space-x-3">
-                <button 
-                  type="button" 
-                  onClick={closeModal} 
-                  className="flex-1 px-4 py-2 border-2 border-gray-200 rounded-xl text-gray-600 font-semibold hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
-                >
-                  {editingUser ? 'Update User' : 'Save User'}
-                </button>
+              ))}
+              
+              <div className="pt-4 flex gap-3">
+                <button type="button" onClick={closeModal} className="flex-1 py-2.5 border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button type="submit" className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700">Save</button>
               </div>
             </form>
           </div>

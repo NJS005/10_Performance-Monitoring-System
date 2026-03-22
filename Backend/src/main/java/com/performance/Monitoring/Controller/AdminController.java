@@ -29,7 +29,7 @@ public class AdminController {
     @Autowired
     private com.performance.Monitoring.Repo.DepartmentRepo departmentRepo;
 
-    @GetMapping("/all")
+    @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userRepo.findAll());
     }

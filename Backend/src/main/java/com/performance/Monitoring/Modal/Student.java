@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 @Entity
-@Table(name = "student")
+@Table(name = "students")
 public class Student {
 
         @Id
@@ -26,12 +26,12 @@ public class Student {
         private String department;
         // @Column(nullable = false)
         private String program;
-        @ManyToOne(fetch = FetchType.LAZY)
+        @ManyToOne(fetch = FetchType.EAGER)
         @JoinColumn(name = "faculty_advisor_id", referencedColumnName = "id")
         @JsonIgnore
         private Faculty facultyAdvisorEntity;
 
-        @ManyToOne(fetch = FetchType.LAZY)
+        @ManyToOne(fetch = FetchType.EAGER)
         @JoinColumn(name = "supervisor_id", referencedColumnName = "id")
         @JsonIgnore
         private Faculty supervisorEntity;
