@@ -6,10 +6,11 @@ import { TargetCGPACalculator } from './TargetCGPACalculator';
 import { AttendanceTracker } from './AttendanceTracker';
 import { CoCurricularActivities } from './CoCurricularActivities';
 import AcademicChatbot from './AcademicChatbot';
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const StudentDashboard = () => {
-  const location = useLocation();
+  const location  = useLocation();
+  const navigate  = useNavigate();
 
 
     const userString = localStorage.getItem("user");
@@ -129,6 +130,12 @@ const StudentDashboard = () => {
   // ── Helpers ────────────────────────────────────────────────────────────────
   const updateStudentData = (patch) =>
     setStudentData((prev) => ({ ...prev, ...patch }));
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/');
+  };
 
  const setCourses = (coursesOrUpdater) => {
   if (typeof coursesOrUpdater === 'function') {
@@ -326,6 +333,7 @@ const StudentDashboard = () => {
             edit={true}
             showAll={true}
             currentSemester={currentSemester}
+            rollNo={rollNo}
           />
         );
 
@@ -375,7 +383,7 @@ const StudentDashboard = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div
-                className="w-10 h-10 bg-white rounded-xl flex items-center justify-center cursor-pointer"
+                className="w-10 h-10 bg-white rounded-xl flex items-center justify-center cursor-pointer flex-shrink-0"
                 onClick={() => setIsSidebarOpen(true)}
               >
                 <span className="text-indigo-600 font-bold text-lg">A</span>
@@ -387,9 +395,11 @@ const StudentDashboard = () => {
                 </div>
               )}
             </div>
+            {/* Toggle button — always visible, clipped inside sidebar */}
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="text-white hover:bg-white/10 p-2 rounded-lg transition-colors hidden lg:block"
+              className="text-white hover:bg-white/10 p-2 rounded-lg transition-colors hidden lg:flex items-center justify-center flex-shrink-0"
+              title={isSidebarOpen ? 'Collapse' : 'Expand'}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -436,16 +446,19 @@ const StudentDashboard = () => {
           </ul>
         </nav>
 
-        {isSidebarOpen && (
-          <div className="p-4 border-t border-white/20">
-            <button className="w-full flex items-center gap-3 px-4 py-3 text-white hover:bg-white/10 rounded-xl transition-colors">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              <span className="font-medium">Logout</span>
-            </button>
-          </div>
-        )}
+        {/* Logout — always visible at bottom regardless of sidebar state */}
+        <div className="p-4 border-t border-white/20">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 text-white hover:bg-white/10 rounded-xl transition-colors"
+            title="Logout"
+          >
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            {isSidebarOpen && <span className="font-medium">Logout</span>}
+          </button>
+        </div>
       </aside>
 
       {/* Mobile overlay */}

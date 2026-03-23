@@ -8,8 +8,11 @@ import com.performance.Monitoring.Modal.User;
 import com.performance.Monitoring.Modal.Faculty;
 import com.performance.Monitoring.Repo.UserRepo;
 import com.performance.Monitoring.Repo.FacultyRepo;
+import com.performance.Monitoring.Security.RateLimiter;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,11 +31,20 @@ public class AuthController {
     @Autowired
     private FacultyRepo facultyRepository;
 
+    @Autowired
+    private RateLimiter rateLimiter;
 
     private static final String CLIENT_ID = "750796996880-c4875choh43f78urk1d5gt06orqln9q1.apps.googleusercontent.com";
 
     @PostMapping("/google")
-    public ResponseEntity<?> loginWithGoogle(@RequestBody Map<String, String> data) {
+    public ResponseEntity<?> loginWithGoogle(@RequestBody Map<String, String> data,
+                                            HttpServletRequest request) {
+        // Rate-limit: 10 auth attempts per minute per IP
+        String clientIp = request.getRemoteAddr();
+        if (!rateLimiter.isAllowed("auth:" + clientIp)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body("Too many login attempts. Please try again in a minute.");
+        }
         String idTokenString = data.get("token");
         String requestedRole = data.get("role");
 

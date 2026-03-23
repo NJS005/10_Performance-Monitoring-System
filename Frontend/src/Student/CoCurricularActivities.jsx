@@ -51,8 +51,12 @@ export const CoCurricularActivities = ({ rollNo }) => {
   };
 
   // Handle form input changes
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  // Strip HTML tags/dangerous chars from user text input
+  const sanitizeText = (str) => str.replace(/<[^>]*>/g, '').replace(/[<>"'`]/g, '');
+
+  const handleChange = (field, value) => {
+    const safe = (typeof value === 'string') ? sanitizeText(value) : value;
+    setFormData(prev => ({ ...prev, [field]: safe }));
   };
 
   // Handle certificate upload
@@ -60,6 +64,11 @@ export const CoCurricularActivities = ({ rollNo }) => {
     const file = event.target.files[0];
     if (file) {
       if (file.type === 'application/pdf' || file.type.startsWith('image/')) {
+        if (file.size > 5 * 1024 * 1024) {
+          alert('File is too large. Maximum allowed size is 5 MB.');
+          event.target.value = '';
+          return;
+        }
         setFormData(prev => ({
           ...prev,
           certificate: file,

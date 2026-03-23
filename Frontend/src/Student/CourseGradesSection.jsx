@@ -80,6 +80,9 @@ const GRADE_BADGE_COLORS = {
   E: 'bg-red-100 text-red-800 border-red-300',
 };
 
+// Shared sanitizer — strips HTML tags to prevent XSS via stored text
+const sanitizeText = (str) => str.replace(/<[^>]*>/g, '').replace(/[<>"'`]/g, '');
+
 // ─── Small reusable edit inputs ───────────────────────────────────────────────
 
 const ECell = ({ value, onChange, type = 'text', placeholder = '' }) => (
@@ -227,6 +230,7 @@ function AutoFillModal({ onClose, onApply, existingCourses }) {
     const file = e.target.files[0];
     if (!file) return;
     if (file.type !== 'application/pdf') { alert('Please upload a PDF file'); return; }
+    if (file.size > 5 * 1024 * 1024) { alert('PDF is too large. Maximum allowed size is 5 MB.'); return; }
     setIsProcessing(true); setError(null);
     try {
       if (!window.pdfjsLib) await new Promise(res => setTimeout(res, 1500));
@@ -572,8 +576,10 @@ const getAllSemesters = () => {
 
   const handlePDFUpload = (e) => {
     const file = e.target.files[0];
-    if (file && file.type === 'application/pdf') { setUploadedPDF(file); setPdfFileName(file.name); }
-    else alert('Please upload a valid PDF file');
+    if (!file) return;
+    if (file.type !== 'application/pdf') { alert('Please upload a valid PDF file'); return; }
+    if (file.size > 5 * 1024 * 1024) { alert('PDF is too large. Maximum allowed size is 5 MB.'); return; }
+    setUploadedPDF(file); setPdfFileName(file.name);
   };
   const removePDF = () => { setUploadedPDF(null); setPdfFileName(''); };
 

@@ -181,14 +181,18 @@ export default function StudentDetailCollection() {
   const advisorLabel     = formData.program ? (isFacultyProgram ? "Faculty Advisor" : "Supervisor") : "Faculty Advisor / Supervisor";
   const advisorField     = isFacultyProgram ? "facultyAdvisor" : "supervisor";
 
+  // Strip HTML/script injection from any text value before storing
+  const sanitizeText = (val) =>
+    typeof val === 'string' ? val.replace(/<[^>]*>/g, '').replace(/[<>"'`]/g, '') : val;
+
   const handleChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: sanitizeText(value) }));
     setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
   const handleAddressChange = (type, field, value) => {
     if (type === "temporary" && sameAddress) return;
-    setFormData((prev) => ({ ...prev, [`${type}Address`]: { ...prev[`${type}Address`], [field]: value } }));
+    setFormData((prev) => ({ ...prev, [`${type}Address`]: { ...prev[`${type}Address`], [field]: sanitizeText(value) } }));
     setErrors((prev) => ({ ...prev, [`${type}_${field}`]: "" }));
   };
 
@@ -251,7 +255,7 @@ export default function StudentDetailCollection() {
           contactNo: Number(formData.contactNo) || 0,
           guardianContact: Number(formData.guardianContact) || 0,
           verificationStatus: 'pending',
-          personalVerificationStatus: 'pending',
+          date: new Date().toISOString().split('T')[0],
           temporaryAddress: sameAddress ? { ...formData.permanentAddress } : formData.temporaryAddress,
         }),
       });
