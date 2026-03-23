@@ -9,4 +9,7 @@ import java.util.Optional;
 public interface UserRepo extends JpaRepository<User, Long> {
 
     Optional<User> findByEmail(String email);
+
+    // Exact name match lookup used to resolve student email by name
+    Optional<User> findByName(String name);
 }

@@ -54,6 +54,10 @@ const StudentCard = ({ student }) => {
               <div className="text-sm text-slate-500">Semester</div>
               <div className="font-medium text-slate-900">Semester {currentSemester}</div>
             </div>
+            <div>
+              <div className="text-sm text-slate-500">Email</div>
+              <div className="font-medium text-slate-900">{student.email || '-'}</div>
+            </div>
           </div>
         </div>
       </div>

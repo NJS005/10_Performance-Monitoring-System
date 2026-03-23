@@ -13,6 +13,7 @@ import com.performance.Monitoring.Repo.CoursesRepo;
 import com.performance.Monitoring.Repo.AttendaceRepo;
 import com.performance.Monitoring.Repo.CourseCatalogRepo;
 import com.performance.Monitoring.Repo.FacultyRepo;
+import com.performance.Monitoring.Repo.UserRepo;
 import com.performance.Monitoring.Modal.Faculty;
 import com.performance.Monitoring.Modal.CourseCatalog;
 
@@ -45,6 +46,9 @@ public class StudentService {
     @Autowired
     private FacultyRepo facultyRepo;
 
+    @Autowired
+    private UserRepo userRepo;
+
     public void putStudentDetails(Student student) {
         if (student.getFacultyAdvisorTemp() != null && !student.getFacultyAdvisorTemp().isBlank()) {
             List<Faculty> faList = facultyRepo.findByNameIgnoreCase(student.getFacultyAdvisorTemp());
@@ -64,7 +68,14 @@ public class StudentService {
     }
 
     public Student getStudentByRollNumber(String rollNumber) {
-        return studentRepo.findById(rollNumber).orElse(null);
+        Student student = studentRepo.findById(rollNumber).orElse(null);
+        if (student != null && student.getName() != null) {
+            userRepo.findByName(student.getName())
+                    // Ensure strict, case-sensitive match on the Java side as well
+                    .filter(u -> u.getName() != null && u.getName().equals(student.getName()))
+                    .ifPresent(u -> student.setEmail(u.getEmail()));
+        }
+        return student;
     }
 
     public List<CoCurricular> getStudentCoCurricular(String rollNumber) {
