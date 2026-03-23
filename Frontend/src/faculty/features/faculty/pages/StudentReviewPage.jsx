@@ -10,18 +10,108 @@ import RejectModal from '../components/RejectModal';
 import ApprovalActions from '../components/ApprovalActions';
 import SubmissionHistory from '../components/SubmissionHistory';
 
+const calculateCgpaFromCourses = (courses) => {
+  if (!courses || courses.length === 0) return null;
+
+  const gradeToPoint = (grade) => {
+    if (typeof grade === 'number') return grade;
+
+    const map = {
+      // Official scale
+      'S': 10,
+      'A': 9,
+      'B': 8,
+      'C': 7,
+      'D': 6,
+      'E': 5,
+      'F': 0,
+      // Fallbacks for any existing data using plus/minus or other codes
+      'O': 10,
+      'A+': 10,
+      'A-': 8,
+      'B+': 8,
+      'P': 5
+    };
+
+    return map[grade] ?? null;
+  };
+
+  let totalCredits = 0;
+  let totalPoints = 0;
+
+  courses.forEach((course) => {
+    const gradePoint = gradeToPoint(course.grade ?? course.gradePoint);
+    const credits = Number(course.credits) || 0;
+
+    if (gradePoint !== null && credits > 0) {
+      totalCredits += credits;
+      totalPoints += gradePoint * credits;
+    }
+  });
+
+  if (totalCredits === 0) return null;
+
+  return (totalPoints / totalCredits).toFixed(2);
+};
+
 const StudentReviewPage = () => {
   const { studentId } = useParams();
   const navigate = useNavigate();
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showApprovalConfirm, setShowApprovalConfirm] = useState(false);
+  const [approvalRemarks, setApprovalRemarks] = useState('');
 
   const { data: student, isLoading } = useStudentDetails(studentId);
   const { approveStudent, rejectStudent } = useReviewActions();
 
+  const computedCgpa = calculateCgpaFromCourses(student?.academicData?.courses);
+
+  const handleViewCoursePdf = async (semester) => {
+    if (!student?.rollNumber) {
+      alert('Student roll number not available');
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/student/courses/verification/${encodeURIComponent(student.rollNumber)}?semester=${semester}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+
+      if (!res.ok) {
+        alert('No verification PDF uploaded for this semester yet.');
+        return;
+      }
+
+      const data = await res.json();
+      if (!data.document) {
+        alert('No verification document found for this semester.');
+        return;
+      }
+
+      window.open(`http://localhost:8080/${data.document}`, '_blank');
+    } catch (error) {
+      console.error('Failed to open course verification PDF:', error);
+      alert('Failed to open verification PDF. Please try again.');
+    }
+  };
+
+  const handleViewCertificate = (certificatePath) => {
+    if (!certificatePath || typeof certificatePath !== 'string') {
+      alert('No certificate uploaded for this activity.');
+      return;
+    }
+    window.open(`http://localhost:8080/${certificatePath}`, '_blank');
+  };
+
   const handleApprove = async () => {
     try {
-      await approveStudent.mutateAsync(studentId);
+      await approveStudent.mutateAsync({ studentId, remarks: approvalRemarks });
+      setApprovalRemarks('');
       navigate('/faculty/students');
     } catch (error) {
       console.error('Approval failed:', error);
@@ -84,9 +174,15 @@ const StudentReviewPage = () => {
 
       {/* Academic Details */}
       <Card className="p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Academic Performance</h2>
-        
-        
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-slate-900">Academic Performance</h2>
+          {computedCgpa && (
+            <div className="text-right">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">CGPA</p>
+              <p className="text-2xl font-bold text-indigo-600">{computedCgpa}</p>
+            </div>
+          )}
+        </div>
 
         {/* Courses */}
        {/* Courses - grouped by semester */}
@@ -106,9 +202,20 @@ const StudentReviewPage = () => {
         .sort((a, b) => a - b)
         .map(sem => (
           <div key={sem} className="mb-4">
-            <p className="text-xs font-semibold text-indigo-600 uppercase mb-2">
-              Semester {sem}
-            </p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-indigo-600 uppercase">
+                Semester {sem}
+              </p>
+              {sem !== 'N/A' && !Number.isNaN(Number(sem)) && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => handleViewCoursePdf(sem)}
+                >
+                  View PDF
+                </Button>
+              )}
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-slate-100">
@@ -192,12 +299,25 @@ const StudentReviewPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {student.coCurricular.map((activity, index) => (
               <div key={index} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-                <h4 className="font-medium text-slate-900">{activity.activity}</h4>
-                <p className="text-sm text-slate-600 mt-1">Role: {activity.role}</p>
-                <p className="text-sm text-slate-500 mt-1">Year: {activity.year}</p>
-                {activity.achievement && (
-                  <p className="text-sm text-emerald-600 font-medium mt-1">{activity.achievement}</p>
-                )}
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h4 className="font-medium text-slate-900">{activity.activity}</h4>
+                    <p className="text-sm text-slate-600 mt-1">Role: {activity.role}</p>
+                    <p className="text-sm text-slate-500 mt-1">Year: {activity.year}</p>
+                    {activity.achievement && (
+                      <p className="text-sm text-emerald-600 font-medium mt-1">{activity.achievement}</p>
+                    )}
+                  </div>
+                  {activity.certificatePath && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => handleViewCertificate(activity.certificatePath)}
+                    >
+                      View PDF
+                    </Button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -225,13 +345,29 @@ const StudentReviewPage = () => {
             <div className="fixed inset-0 bg-slate-900 bg-opacity-50" onClick={() => setShowApprovalConfirm(false)} />
             <Card className="relative max-w-md w-full p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirm Approval</h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 mb-4">
                 Are you sure you want to approve this submission? This action cannot be undone.
               </p>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Approval Remarks <span className="text-slate-400 text-xs">(optional)</span>
+                </label>
+                <textarea
+                  value={approvalRemarks}
+                  onChange={(e) => setApprovalRemarks(e.target.value)}
+                  rows={4}
+                  className="block w-full px-4 py-3 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                  placeholder="Add any remarks or notes for the student (optional)..."
+                />
+              </div>
               <div className="flex space-x-3 justify-end">
                 <Button
                   variant="secondary"
-                  onClick={() => setShowApprovalConfirm(false)}
+                  onClick={() => {
+                    setShowApprovalConfirm(false);
+                    setApprovalRemarks('');
+                  }}
                   disabled={approveStudent.isPending}
                 >
                   Cancel

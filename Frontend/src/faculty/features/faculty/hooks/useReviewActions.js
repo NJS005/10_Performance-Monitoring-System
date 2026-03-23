@@ -5,7 +5,7 @@ export const useReviewActions = () => {
   const queryClient = useQueryClient();
 
   const approveStudent = useMutation({
-    mutationFn: (studentId) => facultyService.approveStudent(studentId),
+    mutationFn: ({ studentId, remarks }) => facultyService.approveStudent(studentId, remarks),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['students'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });

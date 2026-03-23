@@ -180,7 +180,9 @@ async getStudentDetails(studentId) {
         year,
         achievement: a.description,
         // Use backend "type" as a reasonable stand-in for role if present
-        role: a.type || ''
+        role: a.type || '',
+        certificatePath: a.certificate || '',
+        certificateName: a.certificateName || ''
       };
     });
   },
@@ -212,8 +214,8 @@ async getStudentDetails(studentId) {
     };
   },
 
-  // Approve student
-  async approveStudent(studentId) {
+  // Approve student (optionally with remarks)
+  async approveStudent(studentId, remarks) {
     await delay(600);
     
     const student = mockStudents.find(s => s.id === studentId);
@@ -221,6 +223,9 @@ async getStudentDetails(studentId) {
     
     student.status = 'approved';
     student.reviewedDate = new Date().toISOString().split('T')[0];
+    if (remarks && remarks.trim().length > 0) {
+      student.approvalRemarks = remarks.trim();
+    }
     
     return { success: true, message: 'Student approved successfully' };
   },
