@@ -7,6 +7,7 @@ import { AttendanceTracker } from './AttendanceTracker';
 import { CoCurricularActivities } from './CoCurricularActivities';
 import AcademicChatbot from './AcademicChatbot';
 import { useLocation, useNavigate } from 'react-router-dom';
+import DarkModeToggle from '../DarkModeToggle';
 
 const StudentDashboard = () => {
   const location  = useLocation();
@@ -25,6 +26,7 @@ const StudentDashboard = () => {
 
   const [activeView, setActiveView] = useState('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [studentData, setStudentData] = useState(null);   // ← null, not undefined
   const [currentSemester, setCurrentSemester] = useState(null);
 
@@ -222,7 +224,7 @@ const StudentDashboard = () => {
   // ── Loading screen ─────────────────────────────────────────────────────────
   if (!studentData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-purple-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-purple-900 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin" />
           <p className="text-white text-lg font-semibold animate-pulse">Loading Student Portal…</p>
@@ -370,14 +372,14 @@ const StudentDashboard = () => {
 
   // ── Full render ────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-purple-900 flex">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-purple-900 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950 flex">
 
-      {/* Sidebar */}
+      {/* ─── DESKTOP Sidebar ─── */}
       <aside className={`
         ${isSidebarOpen ? 'w-64' : 'w-20'}
-        bg-white/10 backdrop-blur-md border-r border-white/20
+        bg-white/10 dark:bg-black/20 backdrop-blur-md border-r border-white/20
         transition-all duration-300 flex flex-col
-        fixed lg:sticky top-0 h-screen z-40
+        hidden lg:flex sticky top-0 h-screen z-40 flex-shrink-0
       `}>
         <div className="p-6 border-b border-white/20">
           <div className="flex items-center justify-between">
@@ -395,10 +397,9 @@ const StudentDashboard = () => {
                 </div>
               )}
             </div>
-            {/* Toggle button — always visible, clipped inside sidebar */}
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="text-white hover:bg-white/10 p-2 rounded-lg transition-colors hidden lg:flex items-center justify-center flex-shrink-0"
+              className="text-white hover:bg-white/10 p-2 rounded-lg transition-colors flex items-center justify-center flex-shrink-0"
               title={isSidebarOpen ? 'Collapse' : 'Expand'}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -446,8 +447,8 @@ const StudentDashboard = () => {
           </ul>
         </nav>
 
-        {/* Logout — always visible at bottom regardless of sidebar state */}
-        <div className="p-4 border-t border-white/20">
+        <div className="p-4 border-t border-white/20 flex flex-col gap-2">
+          {isSidebarOpen && <DarkModeToggle className="w-full rounded-xl" />}
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-4 py-3 text-white hover:bg-white/10 rounded-xl transition-colors"
@@ -461,21 +462,96 @@ const StudentDashboard = () => {
         </div>
       </aside>
 
-      {/* Mobile overlay */}
-      {isSidebarOpen && (
-        <div className="lg:hidden fixed inset-0 bg-black/50 z-30" onClick={() => setIsSidebarOpen(false)} />
-      )}
-
-      {/* Main content */}
-      <main className="flex-1 p-6 overflow-auto">
-        <div className="lg:hidden mb-6 flex items-center gap-3">
-          <div className="w-10 h-10 bg-white rounded-xl" />
-          <h1 className="text-white text-xl font-bold">AMS</h1>
+      {/* ─── MOBILE Sidebar (slide-in overlay) ─── */}
+      <aside className={`
+        fixed top-0 left-0 h-full w-72 z-50 flex flex-col
+        bg-indigo-950/95 backdrop-blur-md border-r border-white/20
+        transition-transform duration-300 lg:hidden
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="p-5 border-b border-white/20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center">
+              <span className="text-indigo-600 font-bold">A</span>
+            </div>
+            <div>
+              <h1 className="text-white text-lg font-bold">AMS</h1>
+              <p className="text-indigo-200 text-xs">Student Portal</p>
+            </div>
+          </div>
+          <button onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:bg-white/10 p-2 rounded-lg">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
-        <div className="mb-8">
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-            <h2 className="text-white text-3xl font-bold mb-2">
+        <div className="p-5 border-b border-white/20">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+              {studentData.name?.charAt(0) ?? '?'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-semibold truncate">{studentData.name}</p>
+              <p className="text-indigo-300 text-xs">{studentData.rollNo} · {studentData.batch}</p>
+            </div>
+          </div>
+        </div>
+
+        <nav className="flex-1 p-4 overflow-y-auto">
+          <ul className="space-y-2">
+            {menuItems.map((item) => (
+              <li key={item.id}>
+                <button
+                  onClick={() => { setActiveView(item.id); setIsMobileMenuOpen(false); }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
+                    ${activeView === item.id ? 'bg-white text-indigo-700 shadow-lg' : 'text-white hover:bg-white/10'}`}
+                >
+                  {item.icon}
+                  <span className="font-medium">{item.name}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div className="p-4 border-t border-white/20 flex flex-col gap-2">
+          <DarkModeToggle className="w-full rounded-xl" />
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-white hover:bg-white/10 rounded-xl transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span className="font-medium">Logout</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Mobile overlay backdrop */}
+      {isMobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 bg-black/60 z-40" onClick={() => setIsMobileMenuOpen(false)} />
+      )}
+
+      {/* ─── Main content ─── */}
+      <main className="flex-1 p-4 sm:p-6 overflow-auto min-w-0">
+        {/* Mobile top bar */}
+        <div className="lg:hidden mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="text-white hover:bg-white/10 p-2 rounded-lg transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <h1 className="text-white text-xl font-bold">AMS</h1>
+          </div>
+          <DarkModeToggle />
+        </div>
+
+        <div className="mb-6">
+          <div className="bg-white/10 dark:bg-black/20 backdrop-blur-sm rounded-2xl p-5 sm:p-6 border border-white/20">
+            <h2 className="text-white text-2xl sm:text-3xl font-bold mb-1">
               {menuItems.find((item) => item.id === activeView)?.name ?? 'Dashboard'}
             </h2>
             <p className="text-indigo-200">Track. Verify. Grow.</p>

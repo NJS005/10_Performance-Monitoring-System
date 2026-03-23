@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Search, Loader2, X, Edit2, Database, Users, BookOpen, Building } from 'lucide-react';
+import DarkModeToggle from './DarkModeToggle';
 
 // 1. THE BRAIN: This config object tells the UI how to render every table.
 // Add a new block here, and the UI will automatically build the page for it!
@@ -334,26 +335,36 @@ export default function AdminPanel() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Mobile Header (simplified for brevity) */}
-      <div className="lg:hidden fixed top-0 w-full bg-white shadow-sm z-20 p-4 flex justify-between">
-        <h1 className="font-bold text-gray-900">Admin Panel</h1>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>Menu</button>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+      {/* Mobile Header */}
+      <div className="lg:hidden fixed top-0 w-full bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm z-20 p-3 flex justify-between items-center">
+        <h1 className="font-bold text-gray-900 dark:text-white">Admin Panel</h1>
+        <div className="flex items-center gap-2">
+          <DarkModeToggle />
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Dynamic Sidebar */}
-      <aside className={`fixed top-0 left-0 z-30 h-screen transition-transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} bg-white border-r border-gray-200 w-64 flex flex-col`}>
-        <div className="p-6 border-b border-gray-100 flex items-center gap-3">
+      <aside className={`fixed top-0 left-0 z-30 h-screen transition-transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 w-64 flex flex-col`}>
+        <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3">
           <Database className="w-8 h-8 text-blue-600" />
-          <h1 className="text-xl font-bold text-gray-800">System Admin</h1>
+          <h1 className="text-xl font-bold text-gray-800 dark:text-white">System Admin</h1>
         </div>
-        <nav className="p-4 space-y-2">
+        <nav className="p-4 space-y-2 flex-1 overflow-y-auto">
           {Object.entries(tableConfigs).map(([key, config]) => (
             <button
               key={key}
               onClick={() => { setActiveTab(key); setIsMobileMenuOpen(false); }}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${
-                activeTab === key ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
+                activeTab === key ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
             >
               {config.icon}
@@ -361,14 +372,17 @@ export default function AdminPanel() {
             </button>
           ))}
         </nav>
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          <DarkModeToggle className="w-full" />
+        </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64 p-8 pt-20 lg:pt-8 transition-all">
-        <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <main className="flex-1 lg:ml-64 p-4 sm:p-8 pt-20 lg:pt-8 transition-all min-w-0">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Manage {activeConfig.name}</h2>
-            <p className="text-gray-500">View, add, edit, and delete records.</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Manage {activeConfig.name}</h2>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">View, add, edit, and delete records.</p>
           </div>
           <button
             onClick={() => openModal()}
@@ -380,52 +394,52 @@ export default function AdminPanel() {
 
         {/* Search Bar */}
         <div className="mb-6 relative w-full sm:w-96">
-          <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+          <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400 dark:text-gray-500" />
           <input
             type="text"
             placeholder="Search records..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 outline-none"
+            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 outline-none"
           />
         </div>
 
         {/* Dynamic Table */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 dark:bg-gray-750 border-b border-gray-200 dark:border-gray-700">
                 <tr>
                   {activeConfig.columns.map(col => (
-                    <th key={col.key} className="px-6 py-4 text-sm font-semibold text-gray-600">
+                    <th key={col.key} className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
                       {col.label}
                     </th>
                   ))}
-                  <th className="px-6 py-4 text-sm font-semibold text-gray-600 text-right">Actions</th>
+                  <th className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {isLoading ? (
-                  <tr><td colSpan="100%" className="p-8 text-center text-gray-500"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></td></tr>
+                  <tr><td colSpan="100%" className="p-8 text-center text-gray-500 dark:text-gray-400"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></td></tr>
                 ) : filteredData.length === 0 ? (
-                  <tr><td colSpan="100%" className="p-8 text-center text-gray-500">No records found.</td></tr>
+                  <tr><td colSpan="100%" className="p-8 text-center text-gray-500 dark:text-gray-400">No records found.</td></tr>
                 ) : (
                   filteredData.map((item, idx) => (
-                    <tr key={item[activeConfig.idField] || idx} className="hover:bg-gray-50">
+                    <tr key={item[activeConfig.idField] || idx} className="hover:bg-gray-50 dark:hover:bg-gray-750">
                       {activeConfig.columns.map(col => {
                         const val = item[col.key];
                         const displayVal = typeof val === 'object' && val !== null ? (val.name || val.code || JSON.stringify(val)) : val;
                         return (
-                          <td key={col.key} className="px-6 py-4 text-gray-800">
+                          <td key={col.key} className="px-6 py-4 text-gray-800 dark:text-gray-200">
                             {displayVal}
                           </td>
                         );
                       })}
                       <td className="px-6 py-4 text-right flex justify-end gap-2">
-                        <button onClick={() => openModal(item)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                        <button onClick={() => openModal(item)} className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg">
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleDelete(item)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                        <button onClick={() => handleDelete(item)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </td>
@@ -441,25 +455,25 @@ export default function AdminPanel() {
       {/* Dynamic Modal Form */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100">
-              <h3 className="text-xl font-bold text-gray-900">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                 {editingRecord ? 'Edit' : 'Add'} {activeConfig.name.slice(0, -1)}
               </h3>
-              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"><X className="w-5 h-5" /></button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
               {activeConfig.formFields.map(field => (
                 <div key={field.name}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{field.label}</label>
                   
                   {field.type === 'select' ? (
                     <select
                       name={field.name}
                       defaultValue={editingRecord ? (typeof editingRecord[field.name] === 'object' && editingRecord[field.name] !== null ? (editingRecord[field.name].code || editingRecord[field.name].name) : editingRecord[field.name]) : ''}
                       required={field.required}
-                      className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-blue-500 outline-none"
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none"
                     >
                       <option value="">Select...</option>
                       {(field.name === 'department' ? departmentOptions : field.name === 'facultyAdvisor' ? facultyOptions : field.options).map(opt => <option key={opt} value={opt}>{opt}</option>)}
@@ -470,16 +484,15 @@ export default function AdminPanel() {
                       name={field.name}
                       defaultValue={editingRecord ? (typeof editingRecord[field.name] === 'object' && editingRecord[field.name] !== null ? (editingRecord[field.name].code || editingRecord[field.name].name) : editingRecord[field.name]) : ''}
                       required={field.required}
-                      // If editing a primary key (like rollNo), disable the input so they can't change it
                       disabled={editingRecord && field.name === activeConfig.idField}
-                      className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-500"
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-600 disabled:text-gray-500 dark:disabled:text-gray-400"
                     />
                   )}
                 </div>
               ))}
               
               <div className="pt-4 flex gap-3">
-                <button type="button" onClick={closeModal} className="flex-1 py-2.5 border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button type="button" onClick={closeModal} className="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
                 <button type="submit" className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700">Save</button>
               </div>
             </form>

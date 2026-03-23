@@ -1,8 +1,9 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useDashboardStats } from '../../features/faculty/hooks/useStudents';
+import DarkModeToggle from '../../../DarkModeToggle';
 
-const Sidebar = ({ isOpen, setIsOpen }) => {
+const Sidebar = ({ isOpen, setIsOpen, mobileOpen, setMobileOpen }) => {
   const { data: stats } = useDashboardStats();
   const pendingCount = stats?.pending || 0;
 
@@ -40,51 +41,52 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const userName = user?.name?.toUpperCase() || "Faculty Advisor";
   const displayName = userName.toLowerCase().startsWith("dr") ? userName : `Dr. ${userName}`;
-  const initials = userName
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((n) => n[0].toUpperCase())
-    .join("");
 
-  return (
-    <div className={`
-      fixed left-0 top-0 h-full bg-gradient-to-b from-slate-800 to-slate-700
-      transition-all duration-300 z-40
-      ${isOpen ? 'w-64' : 'w-20'}
-    `}>
+  const SidebarContent = ({ mobile = false }) => (
+    <>
       {/* Logo */}
       <div className="flex items-center h-16 px-6 border-b border-white/10">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+        <div className="flex items-center space-x-3 flex-1">
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
             <span className="text-white font-bold text-sm">AMS</span>
           </div>
-          {isOpen && (
+          {(mobile ? true : isOpen) && (
             <span className="text-white font-semibold text-lg">Faculty Portal</span>
           )}
         </div>
+        {mobile && (
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="text-white hover:bg-white/10 p-1 rounded-lg"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
-      <nav className="mt-6 px-3">
+      <nav className="mt-6 px-3 flex-1">
         <div className="space-y-1">
           {navigation.map((item) => (
             <NavLink
               key={item.name}
               to={item.href}
+              onClick={() => mobile && setMobileOpen(false)}
               className={({ isActive }) => `
                 flex items-center px-3 py-3 rounded-lg text-sm font-medium
                 transition-all duration-200
-                ${isActive 
-                  ? 'bg-indigo-600/30 text-white' 
+                ${isActive
+                  ? 'bg-indigo-600/30 text-white'
                   : 'text-slate-300 hover:bg-slate-700 hover:text-white'
                 }
               `}
             >
-              <span className={`${!isOpen && 'mx-auto'}`}>
+              <span className={`${!(mobile || isOpen) && 'mx-auto'}`}>
                 {item.icon}
               </span>
-              {isOpen && (
+              {(mobile || isOpen) && (
                 <>
                   <span className="ml-3 flex-1">{item.name}</span>
                   {item.badge && (
@@ -99,13 +101,14 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         </div>
       </nav>
 
-      {/* User Profile */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-600">
+      {/* Dark mode toggle + User profile */}
+      <div className="p-4 border-t border-slate-600 space-y-3">
+        <DarkModeToggle className="w-full" />
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
+          <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
             FA
           </div>
-          {isOpen && (
+          {(mobile || isOpen) && (
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white truncate">{displayName}</p>
               <p className="text-xs text-slate-400 truncate">{user?.email || 'faculty@university.edu'}</p>
@@ -113,7 +116,30 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           )}
         </div>
       </div>
-    </div>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <div className={`
+        fixed left-0 top-0 h-full bg-gradient-to-b from-slate-800 to-slate-700
+        transition-all duration-300 z-40 flex flex-col
+        hidden lg:flex
+        ${isOpen ? 'w-64' : 'w-20'}
+      `}>
+        <SidebarContent />
+      </div>
+
+      {/* Mobile sidebar */}
+      <div className={`
+        fixed left-0 top-0 h-full w-72 bg-gradient-to-b from-slate-800 to-slate-700
+        transition-transform duration-300 z-40 flex flex-col lg:hidden
+        ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <SidebarContent mobile />
+      </div>
+    </>
   );
 };
 
