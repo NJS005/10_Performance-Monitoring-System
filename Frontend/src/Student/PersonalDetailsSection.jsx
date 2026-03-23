@@ -148,11 +148,13 @@ export const PersonalDetailsSection = ({
   verificationStatus,
   edit = false,
   showAll = false,
-  currentSemester
+  currentSemester,
+  rollNo,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editData,  setEditData]  = useState(studentData);
   const [expanded,  setExpanded]  = useState(false);
+  const [isSaving,  setIsSaving]  = useState(false);
 
   const [departmentsList, setDepartmentsList] = useState([]);
   const [deptMap, setDeptMap] = useState({});
@@ -187,9 +189,37 @@ export const PersonalDetailsSection = ({
     }
   }, [editData.department]);
 
-  const handleEdit   = () => { setIsEditing(true); setEditData(studentData); };
+  const handleEdit   = () => { setIsEditing(true); setEditData(studentData); setExpanded(true); };
   const handleCancel = () => { setEditData(studentData); setIsEditing(false); };
-  const handleSave   = () => { setStudentData({ ...editData, personalVerificationStatus: 'pending' }); setIsEditing(false); };
+  const handleSave   = async () => {
+    setIsSaving(true);
+    try {
+      const payload = {
+        contactNo:        Number(editData.contactNo)       || 0,
+        guardianContact:  Number(editData.guardianContact) || 0,
+        fatherName:       editData.fatherName       || '',
+        motherName:       editData.motherName        || '',
+        permanentAddress: editData.permanentAddress  || {},
+        temporaryAddress: editData.temporaryAddress  || {},
+      };
+      const res = await fetch(`http://localhost:8080/api/student/update/${rollNo}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      setStudentData({ ...editData });
+      setIsEditing(false);
+    } catch (err) {
+      console.error('Failed to save personal details:', err);
+      alert('Could not save changes. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
   const handleChange = (field, value) => setEditData(prev => ({ ...prev, [field]: value }));
 
   const isFacultyProgram = FACULTY_PROGRAMS.includes(studentData.program);
@@ -278,11 +308,11 @@ export const PersonalDetailsSection = ({
               )
             ) : (
               <div style={{ display: "flex", gap: "8px" }}>
-                <button className="pds-save-btn" onClick={handleSave} style={{
-                  background: "#16a34a", color: "#fff", padding: "8px 18px",
-                  borderRadius: "8px", fontSize: "13px", fontWeight: "600",
-                  border: "none", cursor: "pointer", transition: "background 0.2s",
-                }}>Save</button>
+                <button className="pds-save-btn" onClick={handleSave} disabled={isSaving} style={{
+                  background: isSaving ? '#86efac' : '#16a34a', color: '#fff', padding: '8px 18px',
+                  borderRadius: '8px', fontSize: '13px', fontWeight: '600',
+                  border: 'none', cursor: isSaving ? 'not-allowed' : 'pointer', transition: 'background 0.2s',
+                }}>{isSaving ? 'Saving…' : 'Save'}</button>
                 <button className="pds-cancel-btn" onClick={handleCancel} style={{
                   background: "#e2e8f0", color: "#475569", padding: "8px 18px",
                   borderRadius: "8px", fontSize: "13px", fontWeight: "600",
@@ -296,43 +326,33 @@ export const PersonalDetailsSection = ({
         {/* ── Body ── */}
         <div style={{ padding: "24px 28px" }}>
 
-          {/* Core 6-field grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "18px" }}>
+          {/* Core 6-field grid — these fields are ALWAYS read-only, even in edit mode */}
+          {isEditing && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)',
+              borderRadius: '8px', padding: '8px 14px', marginBottom: '16px',
+            }}>
+              <span style={{ fontSize: '14px' }}>🔒</span>
+              <span style={{ fontSize: '12px', color: '#4f46e5', fontWeight: '600' }}>
+                Name, Roll No, Department, Program , Faculty Advisor , Semester and Batch cannot be changed by the Student.
+              </span>
+            </div>
+          )}
 
-            {isEditing
-              ? <EditInput label="Student Name" value={editData.name} onChange={v => handleChange("name", v)} />
-              : <DisplayField label="Student Name" value={studentData.name} />}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '18px' }}>
 
-            {isEditing
-              ? <EditInput label="Roll Number" value={editData.rollNo} onChange={v => handleChange("rollNo", v)} />
-              : <DisplayField label="Roll Number" value={studentData.rollNo} />}
+            {/* Always read-only */}
+            <DisplayField label="Student Name"  value={studentData.name} />
+            <DisplayField label="Roll Number"   value={studentData.rollNo} />
+            <DisplayField label="Department"    value={deptMap[studentData.department] || studentData.department} />
+            <DisplayField label="Program"       value={studentData.program} />
+            <DisplayField label="Batch / Year"  value={String(studentData.batch)} />
 
-            {isEditing
-              ? (UG_PROGRAMS.includes(editData.program)
-                  ? <EditSelect label="Department" value={editData.department}
-                      onChange={v => handleChange("department", v)}
-                      options={departmentsList} />
-                  : <EditInput label="Department / School" value={editData.department}
-                      onChange={v => handleChange("department", v)} />)
-              : <DisplayField label="Department" value={deptMap[studentData.department] || studentData.department} />}
-
-            {isEditing
-              ? <EditSelect label="Program" value={editData.program}
-                  onChange={v => { handleChange("program", v); handleChange("department", ""); }}
-                  options={PROGRAMS} />
-              : <DisplayField label="Program" value={studentData.program} />}
-
-            {isEditing
-              ? <EditInput label="Batch / Year" value={String(editData.batch)} placeholder="e.g. 2023"
-                  onChange={v => handleChange("batch", v)} />
-              : <DisplayField label="Batch / Year" value={String(studentData.batch)} />}
-
-            {isEditing
-              ? <EditSelect label="Current Semester" value={String(currentSemester || "")}
-                  onChange={v => handleChange("currentSemester", parseInt(v))}
+            {/* Current Semester — editable */}
+           <DisplayField label="Current Semester" value={String(currentSemester || '')}
+                  onChange={v => handleChange('currentSemester', parseInt(v))}
                   options={[1,2,3,4,5,6,7,8].map(s => ({ value: String(s), label: `Semester ${s}` }))} />
-              : <DisplayField label="Current Semester"
-                  value={currentSemester ? `Semester ${currentSemester}` : "—"} />}
           </div>
 
           {/* ── Expandable "Show All" area ── */}
@@ -346,18 +366,17 @@ export const PersonalDetailsSection = ({
 
                 <SectionDivider label="Contact & Advisor" />
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "18px" }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '18px' }}>
                   {isEditing
                     ? <EditInput label="Contact Number" value={String(editData.contactNo)} type="tel"
                         placeholder="10-digit mobile"
-                        onChange={v => handleChange("contactNo", v.replace(/\D/g,"").slice(0,10))} />
+                        onChange={v => handleChange('contactNo', v.replace(/\D/g,'').slice(0,10))} />
                     : <DisplayField label="Contact Number" value={String(studentData.contactNo)} />}
 
-                  {isEditing
-                    ? <EditSelect label={advisorLabel} value={editData[advisorEditField]}
-                        onChange={v => handleChange(advisorEditField, v)} 
+                  {/* FA/Supervisor — editable */}
+                 <DisplayField label={advisorLabel} value={editData[advisorEditField]}
+                        onChange={v => handleChange(advisorEditField, v)}
                         options={facultyList} />
-                    : <DisplayField label={advisorLabel} value={advisorValue} />}
                 </div>
 
                 <SectionDivider label="Guardian Information" />

@@ -12,19 +12,19 @@ import com.performance.Monitoring.Modal.CourseVerification;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-// import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import com.performance.Monitoring.Modal.Student;
 import com.performance.Monitoring.Modal.Attendance;
 import com.performance.Monitoring.Modal.CoCurricular;
 import com.performance.Monitoring.Service.StudentService;
-// import com.performance.Monitoring.dto.CoCurricularFormWrapper;
-// import org.springframework.http.MediaType;
-// import org.springframework.web.bind.annotation.RequestParam;
+import com.performance.Monitoring.Security.RateLimiter;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import com.performance.Monitoring.Modal.Courses;
@@ -44,9 +44,18 @@ public class StudentController {
     @Autowired
     private CourseVerificationRepo courseVerificationRepo;
 
+    @Autowired
+    private RateLimiter rateLimiter;
+
     @PreAuthorize("@securityService.canWriteStudent(#student.rollNo)")
     @PostMapping("/details")
-    public ResponseEntity<String> getStudentDetails(@RequestBody Student student) {
+    public ResponseEntity<String> getStudentDetails(@RequestBody Student student,
+                                                    HttpServletRequest request) {
+        String clientIp = request.getRemoteAddr();
+        if (!rateLimiter.isAllowed("studentDetails:" + clientIp)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body("Too many requests. Please slow down.");
+        }
         studentService.putStudentDetails(student);
         System.out.println("Received student details: " + student);
         return ResponseEntity.ok("Student details submitted successfully");
@@ -62,6 +71,57 @@ public class StudentController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    /** Allows a student to update only their permitted mutable fields. */
+    @PreAuthorize("@securityService.canWriteStudent(#rollNo)")
+    @PutMapping("/update/{rollNo}")
+    public ResponseEntity<String> updateStudentPersonalDetails(
+            @PathVariable String rollNo,
+            @RequestBody java.util.Map<String, Object> patch) {
+        Student student = studentService.getStudentByRollNumber(rollNo);
+        if (student == null) return ResponseEntity.notFound().build();
+
+        if (patch.containsKey("contactNo"))
+            student.setContactNo(((Number) patch.get("contactNo")).longValue());
+        if (patch.containsKey("guardianContact"))
+            student.setGuardianContact(((Number) patch.get("guardianContact")).longValue());
+        if (patch.containsKey("fatherName"))
+            student.setFatherName((String) patch.get("fatherName"));
+        if (patch.containsKey("motherName"))
+            student.setMotherName((String) patch.get("motherName"));
+
+        // Addresses are stored as embedded objects — use the existing setters
+        if (patch.containsKey("permanentAddress")) {
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, String> addr = (java.util.Map<String, String>) patch.get("permanentAddress");
+            com.performance.Monitoring.Modal.Address a = student.getPermanentAddress();
+            if (a == null) a = new com.performance.Monitoring.Modal.Address();
+            if (addr.containsKey("line1"))   a.setLine1(addr.get("line1"));
+            if (addr.containsKey("line2"))   a.setLine2(addr.get("line2"));
+            if (addr.containsKey("city"))    a.setCity(addr.get("city"));
+            if (addr.containsKey("state"))   a.setState(addr.get("state"));
+            if (addr.containsKey("country")) a.setCountry(addr.get("country"));
+            if (addr.containsKey("zip"))     a.setZip(addr.get("zip"));
+            student.setPermanentAddress(a);
+        }
+        if (patch.containsKey("temporaryAddress")) {
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, String> addr = (java.util.Map<String, String>) patch.get("temporaryAddress");
+            com.performance.Monitoring.Modal.Address a = student.getTemporaryAddress();
+            if (a == null) a = new com.performance.Monitoring.Modal.Address();
+            if (addr.containsKey("line1"))   a.setLine1(addr.get("line1"));
+            if (addr.containsKey("line2"))   a.setLine2(addr.get("line2"));
+            if (addr.containsKey("city"))    a.setCity(addr.get("city"));
+            if (addr.containsKey("state"))   a.setState(addr.get("state"));
+            if (addr.containsKey("country")) a.setCountry(addr.get("country"));
+            if (addr.containsKey("zip"))     a.setZip(addr.get("zip"));
+            student.setTemporaryAddress(a);
+        }
+
+        studentService.putStudentDetails(student);
+        return ResponseEntity.ok("Personal details updated successfully");
+    }
+
 
     @PreAuthorize("@securityService.canReadStudent(#rollNumber)")
     @GetMapping("/courses/{rollNumber}")
