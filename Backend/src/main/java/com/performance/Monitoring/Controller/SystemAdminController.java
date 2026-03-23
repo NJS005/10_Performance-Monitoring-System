@@ -117,6 +117,14 @@ public class SystemAdminController {
 
     @PostMapping("/students")
     public ResponseEntity<Student> createStudent(@RequestBody Student student) {
+        String faName = student.getFacultyAdvisorTemp();
+        if (faName != null && !faName.trim().isEmpty()) {
+            List<Faculty> faculties = facultyRepo.findByNameIgnoreCase(faName.trim());
+            if (!faculties.isEmpty()) {
+                student.setFacultyAdvisorEntity(faculties.get(0));
+                student.setFacultyAdvisorTemp(null);
+            }
+        }
         return ResponseEntity.ok(studentRepo.save(student));
     }
 
@@ -130,7 +138,24 @@ public class SystemAdminController {
         if (payload.getDepartment() != null) existing.setDepartment(payload.getDepartment());
         if (payload.getBatch() != 0) existing.setBatch(payload.getBatch());
         if (payload.getContactNo() != 0) existing.setContactNo(payload.getContactNo());
-        
+
+        String faName = payload.getFacultyAdvisorTemp();
+        if (faName != null) {
+            if (faName.trim().isEmpty()) {
+                existing.setFacultyAdvisorEntity(null);
+                existing.setFacultyAdvisorTemp(null);
+            } else {
+                List<Faculty> faculties = facultyRepo.findByNameIgnoreCase(faName.trim());
+                if (!faculties.isEmpty()) {
+                    existing.setFacultyAdvisorEntity(faculties.get(0));
+                    existing.setFacultyAdvisorTemp(null);
+                } else {
+                    existing.setFacultyAdvisorTemp(faName);
+                    existing.setFacultyAdvisorEntity(null);
+                }
+            }
+        }
+
         return ResponseEntity.ok(studentRepo.save(existing));
     }
 
