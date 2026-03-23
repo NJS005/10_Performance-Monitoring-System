@@ -77,6 +77,16 @@ public class StudentController {
         return ResponseEntity.ok("Course added successfully");
     }
 
+    @PreAuthorize("@securityService.canWriteStudent(#rollNumber)")
+    @DeleteMapping("/courses/{rollNumber}")
+    public ResponseEntity<String> deleteStudentCourse(
+            @PathVariable String rollNumber,
+            @RequestParam("courseCode") String courseCode,
+            @RequestParam("semester") int semester) {
+        studentService.deleteCourse(rollNumber, courseCode, semester);
+        return ResponseEntity.ok("Course deleted successfully");
+    }
+
     @PreAuthorize("@securityService.canReadStudent(#rollNumber)")
     @GetMapping("/cocurricular/{rollNumber}")
 public ResponseEntity<?> getStudentCoCurricular(@PathVariable String rollNumber) {
@@ -136,7 +146,6 @@ public ResponseEntity<?> getStudentCoCurricular(@PathVariable String rollNumber)
                 verification = new CourseVerification();
                 verification.setRollNo(rollNo);
                 verification.setSemester(semester);
-                verification.setVerificationStatus("pending");
             }
             verification.setDocument(path);
             courseVerificationRepo.save(verification);

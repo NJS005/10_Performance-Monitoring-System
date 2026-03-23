@@ -69,15 +69,18 @@ const StudentDashboard = () => {
         }
         const data = await response.json();
         console.log("Fetched course details:", data);
+        const strHash = (s) => s.split('').reduce((h, c) => (Math.imul(31, h) + c.charCodeAt(0)) | 0, 0);
         const core = data.filter(c => c.courseType === 'PC' || c.courseType === 'IC').map(c => ({
+          id: Math.abs(strHash(c.courseCode + '-' + c.semester)),
           name: c.courseName,
-          code:c.courseCode,
+          code: c.courseCode,
           grade: c.grade,
           credits: c.credit,
           semester: c.semester,
           category: c.courseType,
         }));
-        const elective = data.filter(c => c.courseType === 'EI' || c.courseType === 'OE'|| c.courseType === 'HM'|| c.courseType === 'DA'|| c.courseType === 'AC'|| c.courseType === 'PE').map(c => ({
+        const elective = data.filter(c => c.courseType === 'EI' || c.courseType === 'OE' || c.courseType === 'HM' || c.courseType === 'DA' || c.courseType === 'AC' || c.courseType === 'PE').map(c => ({
+          id: Math.abs(strHash(c.courseCode + '-' + c.semester)),
           name: c.courseName,
           code: c.courseCode,
           grade: c.grade,
@@ -306,7 +309,8 @@ const StudentDashboard = () => {
                 setCourses={setCourses}
                 getGradePoint={getGradePoint}
                 showSemester={currentSemester ? currentSemester - 1 : 'all'}
-                rollNo = {rollNo}
+                rollNo={rollNo}
+                readOnly={true}
               />
               <CGPATrackerGraph gpaData={gpaData} currentCGPA={currentCGPA} />
             </div>

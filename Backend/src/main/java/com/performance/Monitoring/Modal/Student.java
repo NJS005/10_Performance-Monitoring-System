@@ -68,8 +68,7 @@ public class Student {
         private String motherName;
         private long guardianContact;
         private String verificationStatus;
-        private String personalVerificationStatus;
-
+        private String date;
 
 
         public Student() {
@@ -110,7 +109,7 @@ public class Student {
         public Student(String rollNo, String name, int batch, long contactNo, String department, String program,
                         String facultyAdvisor, String supervisor, Address permanentAddress, Address temporaryAddress,
                         String fatherName, String motherName, long guardianContact, String verificationStatus,
-                        String personalVerificationStatus) {
+                         String date  ) {
                 this.rollNo = rollNo;
                 this.name = name;
                 this.batch = batch;
@@ -125,7 +124,14 @@ public class Student {
                 this.motherName = motherName;
                 this.guardianContact = guardianContact;
                 this.verificationStatus = verificationStatus;
-                this.personalVerificationStatus = personalVerificationStatus;
+                this.date = date;
+        }
+
+        public String getDate() {
+                return date;
+        }
+        public void setDate(String date) {
+                this.date = date;
         }
 
         public String getDepartment() {
@@ -244,12 +250,6 @@ public class Student {
                 this.verificationStatus = verificationStatus;
         }
 
-        public String getPersonalVerificationStatus() {
-                return personalVerificationStatus;
-        }
-
-        public void setPersonalVerificationStatus(String personalVerificationStatus) {
-                this.personalVerificationStatus = personalVerificationStatus;
-        }
+        
 
 }

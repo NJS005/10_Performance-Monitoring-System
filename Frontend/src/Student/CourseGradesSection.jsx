@@ -109,9 +109,18 @@ const EGrade = ({ value, onChange }) => (
 const AddCourseRow = ({ onAdd, nextId }) => {
   const blank = { code: '', name: '', credits: '3', grade: 'S', semester: '1', category: 'PC' };
   const [form, setForm] = useState(blank);
+  const [forceElective, setForceElective] = useState(false);
   const set = (f, v) => setForm(p => ({ ...p, [f]: v }));
-  const isElective = ELECTIVE_CATEGORIES.includes(form.category.toUpperCase());
+  // Derived: whether the current category is elective
+  const isElective = forceElective;
   const canAdd = form.code.trim() && form.name.trim();
+
+  const toggleType = () => {
+    const next = !forceElective;
+    setForceElective(next);
+    // Auto-set a sensible default category code when toggling
+    setForm(p => ({ ...p, category: next ? 'EI' : 'PC' }));
+  };
 
   const handleAdd = () => {
     if (!canAdd) return;
@@ -126,6 +135,7 @@ const AddCourseRow = ({ onAdd, nextId }) => {
       _isElective: isElective,
     });
     setForm(blank);
+    setForceElective(false);
   };
 
   return (
@@ -142,7 +152,7 @@ const AddCourseRow = ({ onAdd, nextId }) => {
           <p className="text-xs text-gray-400 font-semibold mb-1">Code</p>
           <ECell value={form.code} onChange={v => set('code', v)} placeholder="CS3001" />
         </div>
-        <div className="col-span-4">
+        <div className="col-span-3">
           <p className="text-xs text-gray-400 font-semibold mb-1">Course Name</p>
           <ECell value={form.name} onChange={v => set('name', v)} placeholder="Course Title" />
         </div>
@@ -162,15 +172,23 @@ const AddCourseRow = ({ onAdd, nextId }) => {
           <p className="text-xs text-gray-400 font-semibold mb-1">Grade</p>
           <EGrade value={form.grade} onChange={v => set('grade', v)} />
         </div>
-        <div className="col-span-2 flex items-center gap-2 pb-0.5">
-          <span className={`text-xs px-2 py-1 rounded-full font-bold whitespace-nowrap flex-shrink-0
-            ${isElective ? 'bg-purple-100 text-purple-700' : 'bg-indigo-100 text-indigo-700'}`}>
-            {isElective ? 'Elec.' : 'Core'}
-          </span>
+        <div className="col-span-3 flex flex-col gap-1.5 pb-0.5">
+          {/* Core / Elective toggle */}
+          <button
+            type="button"
+            onClick={toggleType}
+            className={`w-full py-1 rounded-lg text-xs font-bold border-2 transition-colors ${
+              isElective
+                ? 'bg-purple-100 border-purple-400 text-purple-700 hover:bg-purple-200'
+                : 'bg-indigo-100 border-indigo-400 text-indigo-700 hover:bg-indigo-200'
+            }`}
+          >
+            {isElective ? '🔀 Elective (click to switch)' : '📘 Core (click to switch)'}
+          </button>
           <button
             onClick={handleAdd}
             disabled={!canAdd}
-            className="flex-1 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40
+            className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40
               disabled:cursor-not-allowed text-white rounded-lg text-xs font-bold transition-colors"
           >
             Add
@@ -369,8 +387,9 @@ function AutoFillModal({ onClose, onApply, existingCourses }) {
 
 // ─── Main CourseGradesSection ─────────────────────────────────────────────────
 
-export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSemester = 'all', rollNo }) => {
+export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSemester = 'all', rollNo, readOnly = false }) => {
   const [isEditing,         setIsEditing]         = useState(false);
+  const [isDirty,           setIsDirty]           = useState(false);
   const [editCourses,       setEditCourses]       = useState(courses);
   const [uploadedPDF,       setUploadedPDF]       = useState(null);
   const [pdfFileName,       setPdfFileName]       = useState('');
@@ -381,6 +400,13 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
   const [isSubmitting,      setIsSubmitting]      = useState(false);
   const [submitStatus,      setSubmitStatus]      = useState(null); // 'success' | 'error' | null
   const [fetchedPDFPath,    setFetchedPDFPath]    = useState(null);
+
+  // When activeSemester changes, clear any locally-staged PDF so the user
+  // can upload a fresh one for the new semester (server-side doc is re-fetched below)
+  React.useEffect(() => {
+    setUploadedPDF(null);
+    setPdfFileName('');
+  }, [activeSemester]);
 
   // When activeSemester or rollNo changes, fetch verification
   React.useEffect(() => {
@@ -441,12 +467,41 @@ const getAllSemesters = () => {
 };
   // ── Edit handlers ──────────────────────────────────────────────────────────
 
-  const handleEdit   = () => { setIsEditing(true); setEditCourses(JSON.parse(JSON.stringify(courses))); };
-  const handleSave   = () => { setCourses(editCourses); setIsEditing(false); };
-  const handleCancel = () => { setEditCourses(JSON.parse(JSON.stringify(courses))); setIsEditing(false); };
+  const handleEdit   = () => { setIsEditing(true); setIsDirty(false); setEditCourses(JSON.parse(JSON.stringify(courses))); };
+  const handleSave = async () => {
+    if (!isDirty) return;
+
+    // Find courses that were in `courses` but are missing from `editCourses`
+    const oldAll = [...(courses.core || []), ...(courses.elective || [])];
+    const newAll = [...(editCourses.core || []), ...(editCourses.elective || [])];
+    const newKeys = new Set(newAll.map(c => `${c.code}|${c.semester}`));
+
+    const removed = oldAll.filter(c => !newKeys.has(`${c.code}|${c.semester}`));
+
+    // Fire delete requests for each removed course
+    for (const c of removed) {
+      try {
+        await fetch(
+          `http://localhost:8080/api/student/courses/${rollNo}?courseCode=${encodeURIComponent(c.code)}&semester=${c.semester}`,
+          {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          }
+        );
+      } catch (err) {
+        console.error('Failed to delete course from DB:', err);
+      }
+    }
+
+    setCourses(editCourses);
+    setIsEditing(false);
+    setIsDirty(false);
+  };
+  const handleCancel = () => { setEditCourses(JSON.parse(JSON.stringify(courses))); setIsEditing(false); setIsDirty(false); };
 
   // Change any field on an existing course
   const handleFieldChange = (categoryKey, courseId, field, value) => {
+    setIsDirty(true);
     setEditCourses(prev => ({
       ...prev,
       [categoryKey]: prev[categoryKey].map(c =>
@@ -459,6 +514,7 @@ const getAllSemesters = () => {
 
   // Delete a course while editing
   const handleDeleteCourse = (categoryKey, courseId) => {
+    setIsDirty(true);
     setEditCourses(prev => ({
       ...prev,
       [categoryKey]: prev[categoryKey].filter(c => c.id !== courseId),
@@ -467,6 +523,7 @@ const getAllSemesters = () => {
 
   // Add brand-new course from AddCourseRow
   const handleAddCourse = ({ _isElective, ...course }) => {
+    setIsDirty(true);
     setEditCourses(prev => ({
       ...prev,
       core:     _isElective ? prev.core                : [...prev.core,     course],
@@ -524,18 +581,40 @@ const getAllSemesters = () => {
  
     
   const handleSubmit = async () => {
-    // const submitData = {...AutoFillData.}
-    const cleanCoursesPayload = AutoFillData.subjects.map((item) => {
-      return {
-        rollNo: rollNo,                                // 1. Inject the roll number
-        semester: parseInt(AutoFillData.semester, 10),   // 2. Inject semester and convert to a real number
-        courseCode: item.code,                               // 3. Code matches perfectly
-        courseName: item.subject,                            // 4. Rename 'subject' to 'name' for Spring Boot!
-        credit: parseInt(item.credits, 10),           // 5. Convert string credits to a real number
-        grade: item.grade,                             // 6. Grade matches perfectly
-        courseType: item.category                        // 7. Category matches perfectly
-      };
-    });
+    if (!uploadedPDF && !fetchedPDFPath) {
+      alert('Please attach a PDF grade card before submitting for verification.');
+      return;
+    }
+
+    let cleanCoursesPayload;
+    if (AutoFillData) {
+      // Use the parsed PDF data if AutoFill was used
+      cleanCoursesPayload = AutoFillData.subjects.map((item) => ({
+        rollNo,
+        semester: parseInt(AutoFillData.semester, 10),
+        courseCode: item.code,
+        courseName: item.subject,
+        credit: parseInt(item.credits, 10),
+        grade: item.grade,
+        courseType: item.category
+      }));
+    } else {
+      // Fallback: build from the currently displayed (filtered) courses
+      const allDisplayed = [...(filtered.core || []), ...(filtered.elective || [])];
+      if (allDisplayed.length === 0) {
+        alert('No course data to submit. Please add courses or use Auto-fill first.');
+        return;
+      }
+      cleanCoursesPayload = allDisplayed.map(c => ({
+        rollNo,
+        semester: activeSemester || c.semester,
+        courseCode: c.code,
+        courseName: c.name,
+        credit: parseInt(c.credits, 10) || 0,
+        grade: c.grade,
+        courseType: c.category
+      }));
+    }
     console.log('Submitting courses:', cleanCoursesPayload);
     setIsSubmitting(true);
     setSubmitStatus(null);
@@ -698,14 +777,14 @@ const getAllSemesters = () => {
   return (
     <div className="bg-white rounded-2xl shadow-xl p-6 transition-all duration-300 hover:shadow-2xl h-full flex flex-col">
 
-      {/* Header */}
+      {/* Header - hide Edit/AutoFill if readOnly */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-2xl font-bold text-gray-900 mb-1">Course Grades</h3>
           <p className="text-gray-500">Academic performance overview</p>
         </div>
         <div className="flex items-center gap-2">
-          {!isEditing && (
+          {!readOnly && !isEditing && (
             <button onClick={() => setShowAutoFillModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors text-sm">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -714,7 +793,7 @@ const getAllSemesters = () => {
               Auto-fill PDF
             </button>
           )}
-          {!isEditing ? (
+          {!readOnly && !isEditing && (
             <button onClick={handleEdit}
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -722,9 +801,20 @@ const getAllSemesters = () => {
               </svg>
               Edit
             </button>
-          ) : (
+          )}
+          {!readOnly && isEditing && (
             <div className="flex gap-2">
-              <button onClick={handleSave}   className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg font-medium transition-colors">Save</button>
+              <button
+                onClick={handleSave}
+                disabled={!isDirty}
+                className={`px-5 py-2 rounded-lg font-medium transition-colors ${
+                  isDirty
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                Save
+              </button>
               <button onClick={handleCancel} className="bg-gray-400 hover:bg-gray-500 text-white px-5 py-2 rounded-lg font-medium transition-colors">Cancel</button>
             </div>
           )}
@@ -774,17 +864,19 @@ const getAllSemesters = () => {
         )}
       </div>
 
-      {/* Footer */}
-      <div className="mt-6 pt-6 border-t border-gray-200 space-y-4">
+        {/* Footer — only shown when NOT read-only */}
+        {!readOnly && (
+        <div className="mt-6 pt-6 border-t border-gray-200 space-y-4">
 
-        {/* PDF attach box */}
-        <div className="bg-indigo-50 p-4 rounded-lg border-2 border-indigo-200">
-          <p className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
-            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-            Attach {showSemester === 'all' && activeSemester ? `Semester ${activeSemester}` : 'Current Semester'} Grade Card (PDF)
-          </p>
+          {/* PDF attach box */}
+          <div className="bg-indigo-50 p-4 rounded-lg border-2 border-indigo-200">
+            <p className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
+              <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              Attach {showSemester === 'all' && activeSemester ? `Semester ${activeSemester}` : 'Current Semester'} Grade Card (PDF)
+              <span className="text-red-500 text-xs font-bold">(Required)</span>
+            </p>
           {!uploadedPDF && !fetchedPDFPath ? (
             <>
               <input type="file" accept="application/pdf" onChange={handlePDFUpload} className="hidden" id="pdf-upload" />
@@ -825,52 +917,53 @@ const getAllSemesters = () => {
               </div>
             </div>
           )}
-          <p className="text-xs text-gray-500 mt-2">Optional — your advisor will use this to verify your grades</p>
+          <p className="text-xs text-gray-500 mt-2">Required — your advisor will use this to verify your grades</p>
         </div>
 
-        {/* Status banners */}
-        {submitStatus === 'success' && (
-          <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm font-semibold">
-            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Submitted! Your advisor will review the grades shortly.
-          </div>
-        )}
-        {submitStatus === 'error' && (
-          <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-semibold">
-            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Submission failed. Please try again or contact support.
-          </div>
-        )}
-
-        {/* Submit button */}
-        <button
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700
-            disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 rounded-lg font-bold transition-all
-            duration-200 transform hover:scale-[1.02] shadow-lg flex items-center justify-center gap-2"
-        >
-          {isSubmitting ? (
-            <>
-              <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Submitting…
-            </>
-          ) : (
-            <>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {/* Status banners */}
+          {submitStatus === 'success' && (
+            <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm font-semibold">
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Submit for Verification{uploadedPDF ? ' (with PDF)' : ''}
-            </>
+              Submitted! Your advisor will review the grades shortly.
+            </div>
           )}
-        </button>
-      </div>
+          {submitStatus === 'error' && (
+            <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-semibold">
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Submission failed. Please try again or contact support.
+            </div>
+          )}
+
+          {/* Submit button */}
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting || (!uploadedPDF && !fetchedPDFPath)}
+            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700
+              disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 rounded-lg font-bold transition-all
+              duration-200 transform hover:scale-[1.02] shadow-lg flex items-center justify-center gap-2"
+          >
+            {isSubmitting ? (
+              <>
+                <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Submitting…
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {(!uploadedPDF && !fetchedPDFPath) ? 'Attach PDF to Submit' : `Submit for Verification${uploadedPDF ? ' (with PDF)' : ''}`}
+              </>
+            )}
+          </button>
+        </div>
+        )}
 
       {/* Auto-fill modal */}
       {showAutoFillModal && (

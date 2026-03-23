@@ -17,7 +17,7 @@ import com.performance.Monitoring.Modal.Faculty;
 import com.performance.Monitoring.Modal.CourseCatalog;
 
 import java.util.Set;
-
+import java.time.LocalDate;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -90,7 +90,8 @@ public class StudentService {
                 coRepo.save(activity);
             }
         }
-
+        // Mark student as pending verification with today's date
+        markStudentPending(rollNumber);
     }
     
 
@@ -125,6 +126,8 @@ public class StudentService {
                 coursesRepo.save(course);
             }
         }
+        // Mark student as pending verification with today's date
+        markStudentPending(rollNumber);
     }
 
     public void updateAttendance(String rollNumber, List<Attendance> attendanceList) {
@@ -152,14 +155,35 @@ public class StudentService {
         return attendanceRepo.findByRollNoAndSemester(rollNumber, semester);
     }
 
-    public void deleteCoCurricular(String rollNumber, String title) {
-    String cleanTitle = title.replaceAll("^\"|\"$", ""); // strip leading/trailing quotes
-    List<CoCurricular> existingActivities = coRepo.findByRollNo(rollNumber);
-    for (CoCurricular activity : existingActivities) {
-        if (activity.getTitle().equals(cleanTitle)) {
-            coRepo.delete(activity);
-            break;
+    public void deleteCourse(String rollNumber, String courseCode, int semester) {
+        List<Courses> existing = coursesRepo.findByRollNo(rollNumber);
+        for (Courses c : existing) {
+            if (c.getCourseCode().equalsIgnoreCase(courseCode) && c.getSemester() == semester) {
+                coursesRepo.delete(c);
+                break;
+            }
         }
+        markStudentPending(rollNumber);
     }
-}
+
+    public void deleteCoCurricular(String rollNumber, String title) {
+        String cleanTitle = title.replaceAll("^\"|\"$", ""); // strip leading/trailing quotes
+        List<CoCurricular> existingActivities = coRepo.findByRollNo(rollNumber);
+        for (CoCurricular activity : existingActivities) {
+            if (activity.getTitle().equals(cleanTitle)) {
+                coRepo.delete(activity);
+                break;
+            }
+        }
+        markStudentPending(rollNumber);
+    }
+
+    // ── Helper: stamp the student record as pending with today's date ──────────
+    private void markStudentPending(String rollNumber) {
+        studentRepo.findById(rollNumber).ifPresent(student -> {
+            student.setVerificationStatus("pending");
+            student.setDate(LocalDate.now().toString());
+            studentRepo.save(student);
+        });
+    }
 }

@@ -20,7 +20,6 @@ public class CourseVerification {
 
     private String rollNo;
     private int semester;
-    private String verificationStatus;
 
     private String document;
 
@@ -51,13 +50,7 @@ public class CourseVerification {
         this.semester = semester;
     }
 
-    public String getVerificationStatus() {
-        return verificationStatus;
-    }
 
-    public void setVerificationStatus(String verificationStatus) {
-        this.verificationStatus = verificationStatus;
-    }
 
     public String getDocument() {
         return document;
@@ -71,7 +64,6 @@ public class CourseVerification {
         this.id = id;
         this.rollNo = rollNo;
         this.semester = semester;
-        this.verificationStatus = verificationStatus;
         this.document = document;
     }
     
