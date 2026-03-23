@@ -58,6 +58,7 @@ const tableConfigs = {
       { key: "department", label: "Department" },
       { key: "program", label: "Program" },
       { key: "batch", label: "Batch" },
+      { key: "facultyAdvisor", label: "Faculty Advisor" },
       { key: "contactNo", label: "Contact No" },
       { key: "verificationStatus", label: "Verification" }
     ],
@@ -67,6 +68,7 @@ const tableConfigs = {
       { name: "department", label: "Department Code", type: "select", options: ["CS", "EC", "EE", "ME", "CE", "CH", "PE", "MT", "BT", "EP", "AR"], required: true },
       { name: "program", label: "Program", type: "select", options: ["B.Tech", "B.Arch", "M.Tech", "PhD", "BSc", "MSc", "Integrated"], required: true },
       { name: "batch", label: "Batch Year", type: "number", required: true },
+      { name: "facultyAdvisor", label: "Faculty Advisor", type: "select", options: [], required: false },
       { name: "contactNo", label: "Contact No", type: "number", required: true }
     ]
   },
@@ -205,6 +207,7 @@ export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('users');
   const [data, setData] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);
+  const [facultyOptions, setFacultyOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -250,6 +253,11 @@ export default function AdminPanel() {
       .then(res => res.ok ? res.json() : [])
       .then(deps => setDepartmentOptions(deps.map(d => d.code)))
       .catch(err => console.error("Error fetching departments:", err));
+
+    fetch('http://localhost:8080/api/admin/faculty', { headers: getHeaders() })
+      .then(res => res.ok ? res.json() : [])
+      .then(fac => setFacultyOptions(fac.map(f => f.name)))
+      .catch(err => console.error("Error fetching faculty:", err));
   }, []);
 
   // --- Action Handlers ---
@@ -454,7 +462,7 @@ export default function AdminPanel() {
                       className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-blue-500 outline-none"
                     >
                       <option value="">Select...</option>
-                      {(field.name === 'department' ? departmentOptions : field.options).map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      {(field.name === 'department' ? departmentOptions : field.name === 'facultyAdvisor' ? facultyOptions : field.options).map(opt => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
                   ) : (
                     <input
