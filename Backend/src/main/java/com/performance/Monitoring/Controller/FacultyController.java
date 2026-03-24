@@ -18,6 +18,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
@@ -97,6 +100,37 @@ public class FacultyController {
                 "rejected", rejected,
                 "recentSubmissions", recentSubmissions
         ));
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('FACULTY_ADVISOR')")
+    @PostMapping("/approve/{rollNo}")
+    public ResponseEntity<?> approveStudent(@PathVariable String rollNo, @RequestBody(required = false) Map<String, String> body) {
+        Optional<Student> studentOpt = studentRepo.findById(rollNo);
+        if (studentOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Student student = studentOpt.get();
+        student.setVerificationStatus("approved");
+        studentRepo.save(student);
+
+        return ResponseEntity.ok(Map.of("success", true, "message", "Student approved successfully"));
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('FACULTY_ADVISOR')")
+    @PostMapping("/reject/{rollNo}")
+    public ResponseEntity<?> rejectStudent(@PathVariable String rollNo, @RequestBody(required = false) Map<String, String> body) {
+        Optional<Student> studentOpt = studentRepo.findById(rollNo);
+        if (studentOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Student student = studentOpt.get();
+        student.setVerificationStatus("rejected");
+        // Could also capture remarks if we added a field on the Student entity, but we will leave it as is for now mimicking approve.
+        studentRepo.save(student);
+
+        return ResponseEntity.ok(Map.of("success", true, "message", "Student rejected successfully"));
     }
 }
 

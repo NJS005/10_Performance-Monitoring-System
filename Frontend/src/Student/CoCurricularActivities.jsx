@@ -54,7 +54,7 @@ export const CoCurricularActivities = ({ rollNo }) => {
   // Strip HTML tags/dangerous chars from user text input
   const sanitizeText = (str) => str.replace(/<[^>]*>/g, '').replace(/[<>"'`]/g, '');
 
-  const handleChange = (field, value) => {
+  const handleInputChange = (field, value) => {
     const safe = (typeof value === 'string') ? sanitizeText(value) : value;
     setFormData(prev => ({ ...prev, [field]: safe }));
   };

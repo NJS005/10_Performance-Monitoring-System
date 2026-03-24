@@ -112,9 +112,11 @@ const StudentReviewPage = () => {
     try {
       await approveStudent.mutateAsync({ studentId, remarks: approvalRemarks });
       setApprovalRemarks('');
+      alert('Student approved successfully!');
       navigate('/faculty/students');
     } catch (error) {
       console.error('Approval failed:', error);
+      alert('Failed to approve student. Please try again.');
     }
   };
 
@@ -122,9 +124,11 @@ const StudentReviewPage = () => {
     try {
       await rejectStudent.mutateAsync({ studentId, remarks });
       setShowRejectModal(false);
+      alert('Student rejected successfully!');
       navigate('/faculty/students');
     } catch (error) {
       console.error('Rejection failed:', error);
+      alert('Failed to reject student. Please try again.');
     }
   };
 

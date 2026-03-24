@@ -240,9 +240,9 @@ const StudentDashboard = () => {
     String(studentData.verificationStatus ?? 'Pending');
 
   const verifColorClass =
-    verifLabel === 'Verified' || verifLabel === 'approved' ? 'text-green-400' :
-    verifLabel === 'rejected'                              ? 'text-red-400'   :
-                                                             'text-yellow-400';
+    verifLabel.toLowerCase() === 'verified' || verifLabel.toLowerCase() === 'approved' ? 'text-green-400' :
+    verifLabel.toLowerCase() === 'rejected' ? 'text-red-400' :
+    'text-yellow-400';
 
   // ── renderContent ──────────────────────────────────────────────────────────
   const renderContent = () => {
@@ -254,7 +254,7 @@ const StudentDashboard = () => {
             <PersonalDetailsSection
               studentData={studentData}
               setStudentData={updateStudentData}
-              verificationStatus={studentData.personalVerificationStatus}
+              verificationStatus={studentData.verificationStatus}
               edit={false}
               showAll={false}
               currentSemester={currentSemester}
@@ -299,8 +299,8 @@ const StudentDashboard = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-gray-900">Verification</h3>
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                    verifLabel === 'Pending'  ? 'bg-yellow-100' :
-                    verifLabel === 'Verified' || verifLabel === 'approved' ? 'bg-green-100' : 'bg-red-100'
+                    verifLabel.toLowerCase() === 'pending' ? 'bg-yellow-100' :
+                    verifLabel.toLowerCase() === 'verified' || verifLabel.toLowerCase() === 'approved' ? 'bg-green-100' : 'bg-red-100'
                   }`}>
                     <svg className={`w-6 h-6 ${verifColorClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -331,7 +331,7 @@ const StudentDashboard = () => {
           <PersonalDetailsSection
             studentData={studentData}
             setStudentData={updateStudentData}
-            verificationStatus={studentData.personalVerificationStatus}
+            verificationStatus={studentData.verificationStatus}
             edit={true}
             showAll={true}
             currentSemester={currentSemester}

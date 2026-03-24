@@ -232,7 +232,11 @@ export default function AdminPanel() {
       // Dynamically calls /api/users, /api/students, etc.
       const res = await fetch(`http://localhost:8080/api/${activeConfig.endpoint}`, { headers: getHeaders() });
       if (res.ok) {
-        const result = await res.json();
+        let result = await res.json();
+        // Exclude admin from System Users table
+        if (activeTab === 'users') {
+          result = result.filter(user => user.role?.toLowerCase() !== 'admin');
+        }
         setData(result);
       }
     } catch (error) {

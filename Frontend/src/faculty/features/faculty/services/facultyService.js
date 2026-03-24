@@ -216,35 +216,45 @@ async getStudentDetails(studentId) {
 
   // Approve student (optionally with remarks)
   async approveStudent(studentId, remarks) {
-    await delay(600);
-    
-    const student = mockStudents.find(s => s.id === studentId);
-    if (!student) throw new Error('Student not found');
-    
-    student.status = 'approved';
-    student.reviewedDate = new Date().toISOString().split('T')[0];
-    if (remarks && remarks.trim().length > 0) {
-      student.approvalRemarks = remarks.trim();
+    const res = await fetch(`${API_BASE}/approve/${encodeURIComponent(studentId)}`, {
+      method: 'POST',
+      headers: { 
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ remarks: remarks || '' })
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText || 'Failed to approve student');
     }
-    
-    return { success: true, message: 'Student approved successfully' };
+
+    const data = await res.json();
+    return data;
   },
 
   // Reject student
   async rejectStudent(studentId, remarks) {
-    await delay(600);
-    
     if (!remarks || remarks.trim().length === 0) {
       throw new Error('Rejection remarks are required');
     }
     
-    const student = mockStudents.find(s => s.id === studentId);
-    if (!student) throw new Error('Student not found');
-    
-    student.status = 'rejected';
-    student.reviewedDate = new Date().toISOString().split('T')[0];
-    student.rejectionReason = remarks;
-    
-    return { success: true, message: 'Student rejected with remarks' };
+    const res = await fetch(`${API_BASE}/reject/${encodeURIComponent(studentId)}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ remarks: remarks })
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText || 'Failed to reject student');
+    }
+
+    const data = await res.json();
+    return data;
   }
 };
