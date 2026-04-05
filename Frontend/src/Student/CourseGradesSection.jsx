@@ -60,7 +60,7 @@ function parseGradeCard(text) {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const ELECTIVE_CATEGORIES = ['EI', 'OE', 'HM', 'DA', 'AC', 'PE'];
-const GRADE_OPTIONS = ['S', 'A', 'B', 'C', 'D', 'E'];
+const GRADE_OPTIONS = ['S', 'A', 'B', 'C', 'D', 'E', 'R', 'F', 'W', 'I'];
 
 const GRADE_COLORS = {
   S: 'border-green-400 text-green-700 bg-green-50',
@@ -69,6 +69,10 @@ const GRADE_COLORS = {
   C: 'border-yellow-400 text-yellow-700 bg-yellow-50',
   D: 'border-orange-400 text-orange-700 bg-orange-50',
   E: 'border-red-400 text-red-700 bg-red-50',
+  R: 'border-rose-400 text-rose-700 bg-rose-50',
+  F: 'border-red-600 text-red-800 bg-red-100',
+  W: 'border-gray-400 text-gray-700 bg-gray-50',
+  I: 'border-slate-400 text-slate-700 bg-slate-50',
 };
 
 const GRADE_BADGE_COLORS = {
@@ -78,6 +82,10 @@ const GRADE_BADGE_COLORS = {
   C: 'bg-yellow-100 text-yellow-800 border-yellow-300',
   D: 'bg-orange-100 text-orange-800 border-orange-300',
   E: 'bg-red-100 text-red-800 border-red-300',
+  R: 'bg-rose-100 text-rose-800 border-rose-300',
+  F: 'bg-red-200 text-red-900 border-red-400',
+  W: 'bg-gray-100 text-gray-800 border-gray-300',
+  I: 'bg-slate-100 text-slate-800 border-slate-300',
 };
 
 // Shared sanitizer — strips HTML tags to prevent XSS via stored text
@@ -85,12 +93,14 @@ const sanitizeText = (str) => str.replace(/<[^>]*>/g, '').replace(/[<>"'`]/g, ''
 
 // ─── Small reusable edit inputs ───────────────────────────────────────────────
 
-const ECell = ({ value, onChange, type = 'text', placeholder = '' }) => (
+const ECell = ({ value, onChange, type = 'text', placeholder = '', min, max }) => (
   <input
     type={type}
     value={value ?? ''}
     onChange={e => onChange(e.target.value)}
     placeholder={placeholder}
+    min={min}
+    max={max}
     className="w-full px-2 py-1.5 text-sm border-2 border-indigo-200 rounded-lg
       focus:border-indigo-500 focus:outline-none bg-white transition-colors"
   />
@@ -109,7 +119,14 @@ const EGrade = ({ value, onChange }) => (
 
 // ─── Add New Course Row ───────────────────────────────────────────────────────
 
-const AddCourseRow = ({ onAdd, nextId }) => {
+const getMaxSemester = (programStr) => {
+  const p = (programStr || '').toLowerCase().replace(/[^a-z]/g, '');
+  if (p.includes('btech')) return 8;
+  if (p.includes('barch')) return 10;
+  return 10; // Default max fallback
+};
+
+const AddCourseRow = ({ onAdd, nextId, maxSemester = 10 }) => {
   const blank = { code: '', name: '', credits: '3', grade: 'S', semester: '1', category: 'PC' };
   const [form, setForm] = useState(blank);
   const [forceElective, setForceElective] = useState(false);
@@ -161,7 +178,11 @@ const AddCourseRow = ({ onAdd, nextId }) => {
         </div>
         <div className="col-span-1">
           <p className="text-xs text-gray-400 font-semibold mb-1">Cr.</p>
-          <ECell value={form.credits} onChange={v => set('credits', v)} type="number" placeholder="3" />
+          <ECell value={form.credits} onChange={v => {
+            let val = parseInt(v);
+            if (!isNaN(val) && val > 5) val = 5;
+            set('credits', isNaN(val) ? v : String(val));
+          }} type="number" placeholder="3" min="1" max="5" />
         </div>
         <div className="col-span-1">
           <p className="text-xs text-gray-400 font-semibold mb-1">Cat.</p>
@@ -169,7 +190,11 @@ const AddCourseRow = ({ onAdd, nextId }) => {
         </div>
         <div className="col-span-1">
           <p className="text-xs text-gray-400 font-semibold mb-1">Sem</p>
-          <ECell value={form.semester} onChange={v => set('semester', v)} type="number" placeholder="1" />
+          <ECell value={form.semester} onChange={v => {
+            let val = parseInt(v);
+            if (!isNaN(val) && val > maxSemester) val = maxSemester;
+            set('semester', isNaN(val) ? v : String(val));
+          }} type="number" placeholder="1" min="1" max={maxSemester} />
         </div>
         <div className="col-span-1">
           <p className="text-xs text-gray-400 font-semibold mb-1">Grade</p>
@@ -391,7 +416,7 @@ function AutoFillModal({ onClose, onApply, existingCourses }) {
 
 // ─── Main CourseGradesSection ─────────────────────────────────────────────────
 
-export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSemester = 'all', rollNo, readOnly = false }) => {
+export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSemester = 'all', rollNo, readOnly = false, program = '' }) => {
   const [isEditing,         setIsEditing]         = useState(false);
   const [isDirty,           setIsDirty]           = useState(false);
   const [editCourses,       setEditCourses]       = useState(courses);
@@ -508,11 +533,22 @@ const getAllSemesters = () => {
     setIsDirty(true);
     setEditCourses(prev => ({
       ...prev,
-      [categoryKey]: prev[categoryKey].map(c =>
-        c.id === courseId
-          ? { ...c, [field]: (field === 'credits' || field === 'semester') ? (parseInt(value) || 0) : value }
-          : c
-      ),
+      [categoryKey]: prev[categoryKey].map(c => {
+        if (c.id !== courseId) return c;
+        let newValue = value;
+        if (field === 'credits') {
+           let val = parseInt(value) || 0;
+           if (val > 5) val = 5;
+           newValue = val;
+        }
+        if (field === 'semester') {
+           let val = parseInt(value) || 1;
+           const maxSem = getMaxSemester(program);
+           if (val > maxSem) val = maxSem;
+           newValue = val;
+        }
+        return { ...c, [field]: newValue };
+      })
     }));
   };
 
@@ -860,13 +896,13 @@ const getAllSemesters = () => {
             {renderCourseList('Elective Courses', 'elective', electiveStats)}
             {/* Add new course row — only in edit mode, when list has content */}
             {isEditing && (filtered.core.length > 0 || filtered.elective.length > 0) && (
-              <AddCourseRow onAdd={handleAddCourse} nextId={nextId()} />
+              <AddCourseRow onAdd={handleAddCourse} nextId={nextId()} maxSemester={getMaxSemester(program)} />
             )}
           </>
         )}
         {/* Add new course row in edit mode when list is empty */}
         {isEditing && filtered.core.length === 0 && filtered.elective.length === 0 && (
-          <AddCourseRow onAdd={handleAddCourse} nextId={nextId()} />
+          <AddCourseRow onAdd={handleAddCourse} nextId={nextId()} maxSemester={getMaxSemester(program)} />
         )}
       </div>
 

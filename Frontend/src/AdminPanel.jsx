@@ -210,6 +210,7 @@ export default function AdminPanel() {
   const [facultyOptions, setFacultyOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRows, setSelectedRows] = useState([]);
   
   // --- UI State ---
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -245,6 +246,7 @@ export default function AdminPanel() {
   useEffect(() => {
     fetchTableData();
     setSearchQuery('');
+    setSelectedRows([]);
   }, [activeTab]);
 
   // Fetch dynamic departments on mount
@@ -261,6 +263,31 @@ export default function AdminPanel() {
   }, []);
 
   // --- Action Handlers ---
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Are you sure you want to delete ${selectedRows.length} selected records?`)) return;
+    
+    setIsLoading(true);
+    let hasError = false;
+    
+    await Promise.all(selectedRows.map(async (id) => {
+      try {
+        const res = await fetch(`http://localhost:8080/api/${activeConfig.endpoint}/${id}`, { 
+          method: 'DELETE', headers: getHeaders() 
+        });
+        if (!res.ok) hasError = true;
+      } catch (e) {
+        hasError = true;
+      }
+    }));
+
+    if (hasError) {
+      alert("Some records could not be deleted.");
+    }
+    
+    setSelectedRows([]);
+    fetchTableData();
+  };
+
   const handleDelete = async (record) => {
     const id = record[activeConfig.idField]; // Smartly grabs 'id' or 'rollNo'
     if (!window.confirm(`Are you sure you want to delete this ${activeConfig.name.slice(0, -1)}?`)) return;
@@ -325,6 +352,11 @@ export default function AdminPanel() {
 
   // --- Filtering ---
   const filteredData = data.filter(item => {
+    // Exclude admins from the System Users view
+    if (activeTab === 'users' && item.role === 'Admin') {
+      return false;
+    }
+    
     if (!searchQuery) return true;
     // Search across all configured columns for the active table
     return activeConfig.columns.some(col => {
@@ -332,6 +364,21 @@ export default function AdminPanel() {
       return val && val.toString().toLowerCase().includes(searchQuery.toLowerCase());
     });
   });
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      const allFilteredIds = filteredData.map((item, idx) => item[activeConfig.idField] || idx);
+      setSelectedRows(allFilteredIds);
+    } else {
+      setSelectedRows([]);
+    }
+  };
+
+  const handleSelectRow = (id) => {
+    setSelectedRows(prev => 
+      prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -370,12 +417,22 @@ export default function AdminPanel() {
             <h2 className="text-2xl font-bold text-gray-900">Manage {activeConfig.name}</h2>
             <p className="text-gray-500">View, add, edit, and delete records.</p>
           </div>
-          <button
-            onClick={() => openModal()}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl shadow-sm transition-all font-semibold"
-          >
-            <Plus className="w-5 h-5" /> Add New
-          </button>
+          <div className="flex gap-3">
+            {selectedRows.length > 0 && (
+              <button
+                onClick={handleBulkDelete}
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl shadow-sm transition-all font-semibold"
+              >
+                <Trash2 className="w-5 h-5" /> Delete Selected ({selectedRows.length})
+              </button>
+            )}
+            <button
+              onClick={() => openModal()}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl shadow-sm transition-all font-semibold"
+            >
+              <Plus className="w-5 h-5" /> Add New
+            </button>
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -396,6 +453,14 @@ export default function AdminPanel() {
             <table className="w-full text-left">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
+                  <th className="px-6 py-4 text-sm font-semibold text-gray-600 w-12 text-center">
+                    <input 
+                      type="checkbox"
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      checked={filteredData.length > 0 && selectedRows.length === filteredData.length}
+                      onChange={handleSelectAll}
+                    />
+                  </th>
                   {activeConfig.columns.map(col => (
                     <th key={col.key} className="px-6 py-4 text-sm font-semibold text-gray-600">
                       {col.label}
@@ -410,8 +475,19 @@ export default function AdminPanel() {
                 ) : filteredData.length === 0 ? (
                   <tr><td colSpan="100%" className="p-8 text-center text-gray-500">No records found.</td></tr>
                 ) : (
-                  filteredData.map((item, idx) => (
-                    <tr key={item[activeConfig.idField] || idx} className="hover:bg-gray-50">
+                  filteredData.map((item, idx) => {
+                    const itemId = item[activeConfig.idField] || idx;
+                    const isSelected = selectedRows.includes(itemId);
+                    return (
+                    <tr key={itemId} className={`hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}>
+                      <td className="px-6 py-4 text-center">
+                        <input 
+                          type="checkbox"
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          checked={isSelected}
+                          onChange={() => handleSelectRow(itemId)}
+                        />
+                      </td>
                       {activeConfig.columns.map(col => {
                         const val = item[col.key];
                         const displayVal = typeof val === 'object' && val !== null ? (val.name || val.code || JSON.stringify(val)) : val;
@@ -430,7 +506,8 @@ export default function AdminPanel() {
                         </button>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>

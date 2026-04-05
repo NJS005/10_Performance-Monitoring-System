@@ -146,7 +146,7 @@ const StudentDashboard = () => {
 };
 
   const getGradePoint = (grade) => {
-    const gradeMap = { S: 10, A: 9, B: 8, C: 7, D: 6, E: 5 };
+    const gradeMap = { S: 10, A: 9, B: 8, C: 7, D: 6, E: 5, R: 4, F: 0, W: 0, I: 0 };
     return gradeMap[grade] || 0;
   };
 
@@ -318,6 +318,7 @@ const StudentDashboard = () => {
                 showSemester={currentSemester ? currentSemester - 1 : 'all'}
                 rollNo={rollNo}
                 readOnly={true}
+                program={studentData?.program}
               />
               <CGPATrackerGraph gpaData={gpaData} currentCGPA={currentCGPA} />
             </div>
@@ -345,6 +346,7 @@ const StudentDashboard = () => {
             getGradePoint={getGradePoint}
             showSemester="all"
             rollNo={rollNo}
+            program={studentData?.program}
           />
         );
 
