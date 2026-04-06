@@ -7,12 +7,12 @@ export const CGPATrackerGraph = ({ gpaData, currentCGPA }) => {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-4 rounded-lg shadow-xl border-2 border-indigo-200">
-          <p className="font-bold text-gray-900 mb-2">Semester {label}</p>
-          <p className="text-indigo-700 font-semibold">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-xl border-2 border-indigo-200 dark:border-indigo-600">
+          <p className="font-bold text-gray-900 dark:text-white mb-2">Semester {label}</p>
+          <p className="text-indigo-700 dark:text-indigo-400 font-semibold">
             SGPA: {payload[0].value}
           </p>
-          <p className="text-purple-700 font-semibold">
+          <p className="text-purple-700 dark:text-purple-400 font-semibold">
             CGPA: {payload[1].value}
           </p>
         </div>
@@ -36,11 +36,11 @@ export const CGPATrackerGraph = ({ gpaData, currentCGPA }) => {
   const stats = calculateStats();
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-6 transition-all duration-300 hover:shadow-2xl h-full flex flex-col">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 transition-all duration-300 hover:shadow-2xl h-full flex flex-col">
       {/* Section Header */}
       <div className="mb-6">
-        <h3 className="text-2xl font-bold text-gray-900 mb-1">GPA Tracker</h3>
-        <p className="text-gray-500">Semester-wise performance analysis</p>
+        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">GPA Tracker</h3>
+        <p className="text-gray-500 dark:text-gray-400">Semester-wise performance analysis</p>
       </div>
 
       {/* Current CGPA Display */}
@@ -58,23 +58,23 @@ export const CGPATrackerGraph = ({ gpaData, currentCGPA }) => {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
-          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">
+        <div className="bg-indigo-50 dark:bg-indigo-900/40 rounded-lg p-4 border border-indigo-200 dark:border-indigo-800">
+          <p className="text-xs font-semibold text-gray-600 dark:text-indigo-200 uppercase tracking-wide mb-1">
             Avg SGPA
           </p>
-          <p className="text-2xl font-bold text-indigo-700">{stats.avgSGPA}</p>
+          <p className="text-2xl font-bold text-indigo-700 dark:text-indigo-400">{stats.avgSGPA}</p>
         </div>
-        <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">
+        <div className="bg-green-50 dark:bg-green-900/40 rounded-lg p-4 border border-green-200 dark:border-green-800">
+          <p className="text-xs font-semibold text-gray-600 dark:text-green-200 uppercase tracking-wide mb-1">
             Highest
           </p>
-          <p className="text-2xl font-bold text-green-700">{stats.highestSGPA}</p>
+          <p className="text-2xl font-bold text-green-700 dark:text-green-400">{stats.highestSGPA}</p>
         </div>
-        <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">
+        <div className="bg-orange-50 dark:bg-orange-900/40 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
+          <p className="text-xs font-semibold text-gray-600 dark:text-orange-200 uppercase tracking-wide mb-1">
             Lowest
           </p>
-          <p className="text-2xl font-bold text-orange-700">{stats.lowestSGPA}</p>
+          <p className="text-2xl font-bold text-orange-700 dark:text-orange-400">{stats.lowestSGPA}</p>
         </div>
       </div>
 

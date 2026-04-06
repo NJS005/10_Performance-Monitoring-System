@@ -63,22 +63,22 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl">
    
    
       <div className="mb-6">
-        <h3 className="text-2xl font-bold text-gray-900 mb-1">Target CGPA Calculator</h3>
-        <p className="text-gray-500">Plan your academic performance for upcoming semesters</p>
+        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Target CGPA Calculator</h3>
+        <p className="text-gray-500 dark:text-gray-400">Plan your academic performance for upcoming semesters</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
      
         <div className="space-y-6">
         
-          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border-2 border-indigo-200">
+          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl p-6 border-2 border-indigo-200 dark:border-indigo-800">
             <div className="flex items-center justify-between mb-4">
               
-            <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2 block">
+            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2 block">
               Current CGPA
             </label>    
             </div>
@@ -89,7 +89,7 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
                 step="0.01"
                 max="10"
                 onChange={(e) => setDisplayedCGPA(parseFloat(e.target.value) || 0)}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors duration-200 text-lg font-semibold"
+                className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors duration-200 text-lg font-semibold dark:text-white"
                 min="0"
               />
             </div>
@@ -97,37 +97,37 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
 
          
           <div>
-            <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2 block">
+            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2 block">
               Total Credits Completed
             </label>
             <input
               type="number"
               value={totalCreditsCompleted}
               onChange={(e) => setTotalCreditsCompleted(parseInt(e.target.value) || 0)}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors duration-200 text-lg font-semibold"
+              className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors duration-200 text-lg font-semibold dark:text-white"
               min="0"
             />
-            <p className="text-xs text-gray-500 mt-1">Credits earned from all completed semesters</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Credits earned from all completed semesters</p>
           </div>
 
          
           <div>
-            <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2 block">
+            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2 block">
               Credits for Upcoming Semester
             </label>
             <input
               type="number"
               value={upcomingCredits}
               onChange={(e) => setUpcomingCredits(parseInt(e.target.value) || 0)}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors duration-200 text-lg font-semibold"
+              className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors duration-200 text-lg font-semibold dark:text-white"
               min="0"
             />
-            <p className="text-xs text-gray-500 mt-1">Total credits you plan to take next semester</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Total credits you plan to take next semester</p>
           </div>
 
          
           <div>
-            <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2 block">
+            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2 block">
               Target CGPA
             </label>
             <input
@@ -135,11 +135,11 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
               step="0.1"
               value={targetCGPA}
               onChange={(e) => setTargetCGPA(parseFloat(e.target.value) || 0)}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors duration-200 text-lg font-semibold"
+              className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors duration-200 text-lg font-semibold dark:text-white"
               min="0"
               max="10"
             />
-            <p className="text-xs text-gray-500 mt-1">The CGPA you want to achieve (max 10.00)</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">The CGPA you want to achieve (max 10.00)</p>
           </div>
         </div>
 
@@ -191,15 +191,15 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
                   })()}
 
             
-                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Grade Points Needed:</span>
-                        <span className="font-bold text-gray-900">{result.pointsNeeded}</span>
+                        <span className="text-gray-600 dark:text-gray-300">Grade Points Needed:</span>
+                        <span className="font-bold text-gray-900 dark:text-white">{result.pointsNeeded}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Total Credits After:</span>
-                        <span className="font-bold text-gray-900">{result.totalCreditsAfter}</span>
+                        <span className="text-gray-600 dark:text-gray-300">Total Credits After:</span>
+                        <span className="font-bold text-gray-900 dark:text-white">{result.totalCreditsAfter}</span>
                       </div>
                     </div>
                   </div>
@@ -237,15 +237,15 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
       </div>
 
     
-      <div className="mt-8 pt-6 border-t border-gray-200">
+      <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
         <details className="group">
-          <summary className="cursor-pointer text-sm font-semibold text-gray-700 hover:text-indigo-700 transition-colors duration-200 flex items-center gap-2">
+          <summary className="cursor-pointer text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-indigo-700 dark:hover:text-indigo-400 transition-colors duration-200 flex items-center gap-2">
             <svg className="w-4 h-4 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
             Calculation Formula & Grade Mapping
           </summary>
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg text-sm text-gray-700 space-y-2">
+          <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-sm text-gray-700 dark:text-gray-300 space-y-2">
             <p className="font-mono">CGPA = Σ(Credit × Grade Point) / Σ(Credits)</p>
             <div className="flex flex-wrap gap-4 mt-3 justify-center">
               <div><span className="font-bold">S</span> = 10</div>

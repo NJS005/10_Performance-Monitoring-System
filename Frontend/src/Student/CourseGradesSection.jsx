@@ -658,11 +658,11 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
 
     return (
       <div className="mb-6 last:mb-0">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-gray-200 gap-2">
-          <h4 className="text-lg sm:text-xl font-bold text-gray-900">{categoryName}</h4>
+        <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-gray-200 dark:border-gray-700 gap-2">
+          <h4 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">{categoryName}</h4>
           <div className="flex gap-3 text-sm flex-shrink-0">
-            <span className="text-gray-600"><span className="font-semibold">{stats.totalCredits}</span> Cr</span>
-            <span className="text-indigo-700 font-bold">GPA: {stats.gpa}</span>
+            <span className="text-gray-600 dark:text-gray-400"><span className="font-semibold">{stats.totalCredits}</span> Cr</span>
+            <span className="text-indigo-700 dark:text-indigo-400 font-bold">GPA: {stats.gpa}</span>
           </div>
         </div>
 
@@ -672,7 +672,7 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
 
             if (isEditing) {
               return (
-                <div key={course.id} className="rounded-lg border border-indigo-200 bg-white p-3 shadow-sm">
+                <div key={course.id} className="rounded-lg border border-indigo-200 dark:border-indigo-600 bg-white dark:bg-gray-800 p-3 shadow-sm">
                   {/* Edit mode: 2-col stacked on mobile, full row on md+ */}
                   <div className="grid grid-cols-2 md:grid-cols-12 gap-2 items-end">
                     <div className="col-span-1 md:col-span-2">
@@ -719,31 +719,31 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
             // Read-only display — stacks on mobile
             return (
               <div key={course.id} className={`rounded-lg p-3 sm:p-4 border transition-all duration-500
-                ${flashed ? 'bg-indigo-50 border-indigo-400 ring-2 ring-indigo-300 scale-[1.01]' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`}>
+                ${flashed ? 'bg-indigo-50 dark:bg-indigo-900/40 border-indigo-400 dark:border-indigo-600 ring-2 ring-indigo-300 scale-[1.01]' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
                 {/* Mobile: stacked layout; sm+: grid row */}
                 <div className="flex flex-col sm:grid sm:grid-cols-12 sm:gap-4 sm:items-center gap-2">
                   {/* Code + name row (always visible) */}
                   <div className="sm:col-span-2">
-                    <span className="font-mono text-sm font-bold text-indigo-700">{course.code}</span>
+                    <span className="font-mono text-sm font-bold text-indigo-700 dark:text-indigo-400">{course.code}</span>
                   </div>
                   <div className="sm:col-span-5 flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-gray-900 text-sm sm:text-base">{course.name}</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base">{course.name}</span>
                     {flashed && <span className="text-xs bg-indigo-600 text-white px-2 py-0.5 rounded-full font-semibold animate-pulse">Auto-filled</span>}
                   </div>
                   {/* Credits + grade + semester row on mobile */}
                   <div className="flex items-center justify-between sm:contents">
                     <div className="sm:col-span-2 sm:text-center">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-800 text-xs sm:text-sm font-semibold">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300 text-xs sm:text-sm font-semibold">
                         {course.credits} Credits
                       </span>
                     </div>
                     <div className="sm:col-span-2 sm:text-center">
-                      <span className={`inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-lg border-2 font-bold text-base sm:text-lg ${GRADE_BADGE_COLORS[course.grade] || 'border-gray-200 text-gray-700'}`}>
+                      <span className={`inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-lg border-2 font-bold text-base sm:text-lg ${GRADE_BADGE_COLORS[course.grade] || 'border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300'}`}>
                         {course.grade}
                       </span>
                     </div>
                     <div className="sm:col-span-1 sm:text-right">
-                      <span className="text-xs text-gray-500">Sem {course.semester}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">Sem {course.semester}</span>
                     </div>
                   </div>
                 </div>
@@ -763,13 +763,13 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
 
   // ── JSX ────────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 transition-all duration-300 hover:shadow-2xl h-full flex flex-col">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 sm:p-6 transition-all duration-300 hover:shadow-2xl h-full flex flex-col">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
         <div>
-          <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Course Grades</h3>
-          <p className="text-gray-500 text-sm">Academic performance overview</p>
+          <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-1">Course Grades</h3>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Academic performance overview</p>
         </div>
         {!readOnly && (
           <div className="flex items-center gap-2 flex-wrap">

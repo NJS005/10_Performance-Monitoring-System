@@ -259,12 +259,12 @@ const handleAddActivity = () => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-8">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 transition-colors duration-300">
       {/* Section Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-1">Co-Curricular Activities</h3>
-          <p className="text-gray-500">Document your achievements and participation</p>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Co-Curricular Activities</h3>
+          <p className="text-gray-500 dark:text-gray-400">Document your achievements and participation</p>
         </div>
 
         {!isAdding && !editingId && (
@@ -446,13 +446,13 @@ const handleAddActivity = () => {
             return (
               <div
                 key={activity.id}
-                className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all duration-200"
+                className="bg-white dark:bg-gray-700/30 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:shadow-lg transition-all duration-200"
               >
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h4 className="text-xl font-bold text-gray-900">{activity.title}</h4>
+                      <h4 className="text-xl font-bold text-gray-900 dark:text-gray-100">{activity.title}</h4>
                       <span className={`px-3 py-1 rounded-full text-sm font-semibold border-2 flex items-center gap-1 ${getColorClasses(activityType.color)}`}>
                         <span>{activityType.icon}</span>
                         <span>{activityType.label}</span>
@@ -496,7 +496,7 @@ const handleAddActivity = () => {
                 </div>
 
                 {/* Description */}
-                <p className="text-gray-700 mb-4 leading-relaxed">{activity.description}</p>
+                <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">{activity.description}</p>
 
                 {/* Certificate Badge & View Button */}
                 {activity.certificateName && (

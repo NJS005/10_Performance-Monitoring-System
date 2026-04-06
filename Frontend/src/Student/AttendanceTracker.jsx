@@ -375,12 +375,12 @@ export const AttendanceTracker = ({ courses, rollNo }) => {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-3 sm:p-4 lg:p-6 bg-white rounded-xl shadow-lg">
+    <div className="w-full max-w-7xl mx-auto p-3 sm:p-4 lg:p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
 
       {/* ── Header ── */}
       <div className="mb-4 sm:mb-6">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Attendance Tracker</h2>
-        <p className="text-sm sm:text-base text-gray-600">Timetable-based attendance monitoring</p>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1">Attendance Tracker</h2>
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Timetable-based attendance monitoring</p>
       </div>
 
       {/* ── Controls ── */}
@@ -421,8 +421,8 @@ export const AttendanceTracker = ({ courses, rollNo }) => {
       </div>
 
       {/* ── Course Settings Panel ── */}
-      <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-xl border border-gray-200">
-        <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">Course Settings</h3>
+      <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">Course Settings</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3">
           {getUniqueCourses().map(course => {
             const settings = courseSettings[course] || { enabled: true, requiredPercentage: 75, displayName: course };
@@ -433,9 +433,9 @@ export const AttendanceTracker = ({ courses, rollNo }) => {
                 className={`p-2 rounded-lg border-2 transition-all ${
                   settings.enabled
                     ? attendance.shortage
-                      ? 'bg-yellow-50 border-yellow-300'
-                      : 'bg-green-50 border-green-300'
-                    : 'bg-gray-100 border-gray-300 opacity-60'
+                      ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700'
+                      : 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'
+                    : 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 opacity-60'
                 }`}
               >
                 <div className="mb-1.5">
@@ -641,11 +641,11 @@ export const AttendanceTracker = ({ courses, rollNo }) => {
             return (
               <div
                 key={day}
-                className={`flex border-b border-gray-200 ${isToday ? 'bg-indigo-50/40' : 'hover:bg-gray-50/60'}`}
+                className={`flex border-b border-gray-200 dark:border-gray-700 ${isToday ? 'bg-indigo-50/40 dark:bg-indigo-900/20' : 'hover:bg-gray-50/60 dark:hover:bg-gray-700/50'}`}
               >
                 {/* Day label */}
                 <div className={`w-20 lg:w-24 flex-shrink-0 p-1.5 lg:p-2 font-bold text-center border-r-2 flex flex-col justify-center items-center gap-0.5 ${
-                  isToday ? 'bg-indigo-100 border-indigo-400' : 'bg-gray-50 border-gray-300'
+                  isToday ? 'bg-indigo-100 border-indigo-400 dark:bg-indigo-900 dark:border-indigo-600' : 'bg-gray-50 border-gray-300 dark:bg-gray-800 dark:border-gray-700'
                 }`}>
                   <div className={`text-xs lg:text-sm font-bold ${isToday ? 'text-indigo-700' : 'text-gray-700'}`}>{day}</div>
                   {isToday && (

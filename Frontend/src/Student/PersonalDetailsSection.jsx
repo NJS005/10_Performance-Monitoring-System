@@ -56,8 +56,8 @@ const editSelectStyle = {
 
 const DisplayField = ({ label, value }) => (
   <div>
-    <label style={fieldLabel}>{label}</label>
-    <div style={fieldValue}>
+    <label className="pds-field-label" style={fieldLabel}>{label}</label>
+    <div className="pds-field-value" style={fieldValue}>
       {value || <span style={{ color: "#94a3b8", fontStyle: "italic" }}>—</span>}
     </div>
   </div>
@@ -65,9 +65,10 @@ const DisplayField = ({ label, value }) => (
 
 const EditInput = ({ label, value, onChange, type = "text", placeholder }) => (
   <div>
-    <label style={fieldLabel}>{label}</label>
+    <label className="pds-field-label" style={fieldLabel}>{label}</label>
     <input
       type={type}
+      className="pds-input"
       value={value || ""}
       placeholder={placeholder}
       onChange={e => onChange(e.target.value)}
@@ -80,9 +81,10 @@ const EditInput = ({ label, value, onChange, type = "text", placeholder }) => (
 
 const EditSelect = ({ label, value, onChange, options }) => (
   <div>
-    <label style={fieldLabel}>{label}</label>
+    <label className="pds-field-label" style={fieldLabel}>{label}</label>
     <select
       value={value || ""}
+      className="pds-select"
       onChange={e => onChange(e.target.value)}
       style={editSelectStyle}
     >
@@ -98,11 +100,11 @@ const EditSelect = ({ label, value, onChange, options }) => (
 
 const SectionDivider = ({ label }) => (
   <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "8px 0" }}>
-    <div style={{ flex: 1, height: "1px", background: "linear-gradient(90deg, #e2e8f8, transparent)" }} />
-    <span style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.1em", textTransform: "uppercase", color: "#94a3b8", whiteSpace: "nowrap" }}>
+    <div className="pds-section-divider-line" style={{ flex: 1, height: "1px", background: "linear-gradient(90deg, #e2e8f8, transparent)" }} />
+    <span className="pds-section-divider-text" style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.1em", textTransform: "uppercase", color: "#94a3b8", whiteSpace: "nowrap" }}>
       {label}
     </span>
-    <div style={{ flex: 1, height: "1px", background: "linear-gradient(90deg, transparent, #e2e8f8)" }} />
+    <div className="pds-section-divider-line right" style={{ flex: 1, height: "1px", background: "linear-gradient(90deg, transparent, #e2e8f8)" }} />
   </div>
 );
 
@@ -113,8 +115,8 @@ const AddressBlock = ({ title, data, prefix, isEditing, editData, handleChange, 
     return [a.line1, a.line2, a.city, a.state, a.country, a.zip].filter(Boolean).join(", ") || "—";
   };
   return (
-    <div style={{ borderRadius: "10px", border: "1px solid #e2e8f8", overflow: "hidden" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 14px", background: "#f8faff", borderBottom: "1px solid #e2e8f8" }}>
+    <div className="pds-address-block" style={{ borderRadius: "10px", border: "1px solid #e2e8f8", overflow: "hidden" }}>
+      <div className="pds-address-header" style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 14px", background: "#f8faff", borderBottom: "1px solid #e2e8f8" }}>
         <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: accentColor, flexShrink: 0 }} />
         <span style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", color: "#64748b" }}>{title}</span>
       </div>
@@ -132,7 +134,7 @@ const AddressBlock = ({ title, data, prefix, isEditing, editData, handleChange, 
           <EditInput label="ZIP"     value={editData[prefix]?.zip}     onChange={v => handleChange(prefix, { ...editData[prefix], zip: v })} />
         </div>
       ) : (
-        <div style={{ padding: "12px 14px" }}>
+        <div className="pds-address-body" style={{ padding: "12px 14px" }}>
           <p style={{ fontSize: "13px", color: "#475569", lineHeight: "1.6", margin: 0 }}>{formatAddress(addr)}</p>
         </div>
       )}
@@ -244,6 +246,22 @@ export const PersonalDetailsSection = ({
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         .pds-root * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+        
+        /* ── Dark Mode Overrides ── */
+        .dark .pds-root { background: #1f2937 !important; border-color: #374151 !important; box-shadow: 0 4px 24px rgba(0,0,0,0.2) !important; }
+        .dark .pds-title { color: #f9fafb !important; }
+        .dark .pds-header p { color: #9ca3af !important; }
+        .dark .pds-header { border-bottom-color: #374151 !important; }
+        .dark .pds-field-value { background: #374151 !important; border-color: #4b5563 !important; color: #f3f4f6 !important; }
+        .dark .pds-field-label { color: #9ca3af !important; }
+        .dark .pds-address-block { border-color: #4b5563 !important; }
+        .dark .pds-address-header { background: #111827 !important; border-bottom-color: #4b5563 !important; }
+        .dark .pds-address-body p { color: #d1d5db !important; }
+        .dark .pds-section-divider-text { color: #9ca3af !important; }
+        .dark .pds-section-divider-line { background: linear-gradient(90deg, #4b5563, transparent) !important; }
+        .dark .pds-section-divider-line.right { background: linear-gradient(90deg, transparent, #4b5563) !important; }
+        .dark input.pds-input, .dark select.pds-select { background: #374151 !important; color: #f3f4f6 !important; border-color: #4b5563 !important; }
+
         .pds-edit-btn:hover { background: #4338ca !important; }
         .pds-save-btn:hover { background: #15803d !important; }
         .pds-cancel-btn:hover { background: #cbd5e1 !important; }
@@ -358,8 +376,7 @@ export const PersonalDetailsSection = ({
         }
       `}</style>
 
-      <div className="pds-root" style={{
-        background: "#fff",
+      <div className="pds-root bg-white dark:bg-gray-800" style={{
         borderRadius: "16px",
         boxShadow: "0 4px 24px rgba(99,102,241,0.08), 0 1px 4px rgba(0,0,0,0.06)",
         overflow: "hidden",
