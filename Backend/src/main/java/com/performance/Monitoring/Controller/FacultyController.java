@@ -121,7 +121,7 @@ public class FacultyController {
         studentRepo.save(student);
 
         // Send Email
-        String feedback = body != null ? body.get("feedback") : null;
+        String feedback = body != null ? body.get("remarks") : null;
         if (student.getName() != null) {
             com.performance.Monitoring.Modal.User u = userRepo.findByName(student.getName()).orElse(null);
             if (u != null && u.getEmail() != null) {
@@ -157,7 +157,7 @@ public class FacultyController {
         studentRepo.save(student);
 
         // Send Email
-        String feedback = body != null ? body.get("feedback") : null;
+        String feedback = body != null ? body.get("remarks") : null;
         if (student.getName() != null) {
             com.performance.Monitoring.Modal.User u = userRepo.findByName(student.getName()).orElse(null);
             if (u != null && u.getEmail() != null) {
