@@ -75,17 +75,29 @@ const StudentsPage = () => {
       {
         accessorKey: 'name',
         header: 'Student',
-        cell: ({ row }) => (
-          <div className="flex items-center">
-            <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold text-sm">
-              {row.original.avatar}
+        cell: ({ row }) => {
+          const isWeak = row.original.cgpa && parseFloat(row.original.cgpa) < 6.0 && row.original.cgpa !== '-';
+          return (
+            <div className="flex items-center">
+              <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold text-sm">
+                {row.original.avatar}
+              </div>
+              <div className="ml-4 flex items-center gap-2">
+                <div>
+                  <div className="text-sm font-medium text-slate-900 flex items-center gap-2">
+                    {row.original.name}
+                    {isWeak && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800" title="Weak Academics (CGPA < 6.0)">
+                        ⚠️ Weak
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-sm text-slate-500">{row.original.rollNumber}</div>
+                </div>
+              </div>
             </div>
-            <div className="ml-4">
-              <div className="text-sm font-medium text-slate-900">{row.original.name}</div>
-              <div className="text-sm text-slate-500">{row.original.rollNumber}</div>
-            </div>
-          </div>
-        )
+          );
+        }
       },
       {
         accessorKey: 'program',

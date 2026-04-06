@@ -105,6 +105,28 @@ const openDecisionEmail = (student, decision, remarks) => {
   window.location.href = mailto;
 };
 
+// Helper to get grade badge colors
+const getGradeBadgeClass = (grade) => {
+  const g = String(grade).toUpperCase();
+  if (['S', 'A', 'O', 'A+'].includes(g)) return 'bg-green-100 text-green-800 border-green-300';
+  if (['B', 'A-', 'B+'].includes(g)) return 'bg-blue-100 text-blue-800 border-blue-300';
+  if (['C'].includes(g)) return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+  if (['D', 'P'].includes(g)) return 'bg-orange-100 text-orange-800 border-orange-300';
+  if (['E', 'R', 'F', 'W', 'I'].includes(g)) return 'bg-red-100 text-red-800 border-red-300 font-bold';
+  return 'bg-slate-100 text-slate-800 border-slate-300';
+};
+
+// Helper to get grade row colors
+const getGradeRowClass = (grade) => {
+  const g = String(grade).toUpperCase();
+  if (['S', 'A', 'O', 'A+'].includes(g)) return 'bg-green-50 hover:bg-green-100';
+  if (['B', 'A-', 'B+'].includes(g)) return 'bg-blue-50 hover:bg-blue-100';
+  if (['C'].includes(g)) return 'bg-yellow-50 hover:bg-yellow-100';
+  if (['D', 'P'].includes(g)) return 'bg-orange-50 hover:bg-orange-100';
+  if (['E', 'R', 'F', 'W', 'I'].includes(g)) return 'bg-red-50 hover:bg-red-100';
+  return 'bg-white hover:bg-slate-50';
+};
+
 const StudentReviewPage = () => {
   const { studentId } = useParams();
   const navigate = useNavigate();
@@ -286,13 +308,13 @@ const StudentReviewPage = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {bySemester[sem].map((course, index) => (
-                    <tr key={index} className="hover:bg-slate-50">
+                    <tr key={index} className={`transition-colors ${getGradeRowClass(course.grade)}`}>
                       <td className="px-4 py-3 font-medium text-slate-900">{course.code}</td>
                       <td className="px-4 py-3 text-slate-700">{course.name}</td>
                       <td className="px-4 py-3 text-center text-slate-500 text-xs">{course.courseType || '—'}</td>
                       <td className="px-4 py-3 text-center text-slate-700">{course.credits}</td>
                       <td className="px-4 py-3 text-center">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getGradeBadgeClass(course.grade)}`}>
                           {course.grade}
                         </span>
                       </td>

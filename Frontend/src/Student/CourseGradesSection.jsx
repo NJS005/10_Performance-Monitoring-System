@@ -47,6 +47,12 @@ function parseGradeCard(text) {
   const sgpa = sgpaMatch ? sgpaMatch[1] : '';
   const cgpa = cgpaMatch ? cgpaMatch[1] : '';
 
+  // Extract roll number by matching the NITC format directly anywhere in the text:
+  // [B/M/P][YY][4-digit number][2-3 letter dept] e.g. B230483CS, M221234CS, P230123CS
+  // This is more robust than label-matching because pdf.js may reorder columns.
+  const rollNoMatch = text.match(/\b([BMP]\d{6}[A-Z]{2,3})\b/i);
+  const pdfRollNo = rollNoMatch ? rollNoMatch[1].trim().toUpperCase() : '';
+
   const courseRegex = /([A-Z]{2,3}\d{4}[A-Z]?)\s+([\w\s&,()-]+?)\s+(\d)\s+([A-Z]{2,3})\s+([SABCDERFW])\b/g;
   const subjects = [];
   let match;
@@ -54,7 +60,7 @@ function parseGradeCard(text) {
     if (match[2].toLowerCase().includes('grade point')) continue;
     subjects.push({ code: match[1].trim(), subject: match[2].trim(), credits: match[3], category: match[4].trim(), grade: match[5] });
   }
-  return { semester, sgpa, cgpa, subjects };
+  return { semester, sgpa, cgpa, pdfRollNo, subjects };
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -226,12 +232,13 @@ const AddCourseRow = ({ onAdd, nextId, maxSemester = 10 }) => {
 
 // ─── AutoFill Modal ───────────────────────────────────────────────────────────
 
-function AutoFillModal({ onClose, onApply, existingCourses }) {
-  const [step, setStep]                 = useState(1);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError]               = useState(null);
-  const [mappings, setMappings]         = useState([]);
-  const [parsed, setParsed]             = useState(null);
+function AutoFillModal({ onClose, onApply, existingCourses, studentRollNo }) {
+  const [step, setStep]                   = useState(1);
+  const [isProcessing, setIsProcessing]   = useState(false);
+  const [error, setError]                 = useState(null);
+  const [mappings, setMappings]           = useState([]);
+  const [parsed, setParsed]               = useState(null);
+  const [rollMismatch, setRollMismatch]   = useState(null); // null | { pdf, student }
 
   const allExisting = [...existingCourses.core, ...existingCourses.elective];
 
@@ -252,11 +259,18 @@ function AutoFillModal({ onClose, onApply, existingCourses }) {
     if (!file) return;
     if (file.type !== 'application/pdf') { alert('Please upload a PDF file'); return; }
     if (file.size > 5 * 1024 * 1024) { alert('PDF is too large. Maximum allowed size is 5 MB.'); return; }
-    setIsProcessing(true); setError(null);
+    setIsProcessing(true); setError(null); setRollMismatch(null);
     try {
       if (!window.pdfjsLib) await new Promise(res => setTimeout(res, 1500));
       const text = await extractTextFromPDF(file);
       const data = parseGradeCard(text);
+
+      // Roll number mismatch check
+      if (data.pdfRollNo && studentRollNo &&
+          data.pdfRollNo.toUpperCase() !== studentRollNo.toUpperCase()) {
+        setRollMismatch({ pdf: data.pdfRollNo, student: studentRollNo });
+      }
+
       const autoMappings = data.subjects.map((s, idx) => {
         const match = allExisting.find(c =>
           c.name && (c.code.toLowerCase() === s.code.toLowerCase() ||
@@ -299,6 +313,22 @@ function AutoFillModal({ onClose, onApply, existingCourses }) {
             </svg>
           </button>
         </div>
+
+        {/* Roll number mismatch warning */}
+        {rollMismatch && (
+          <div className="flex items-start gap-3 mb-4 p-3 bg-amber-50 border border-amber-300 rounded-xl">
+            <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+            <div>
+              <p className="text-sm font-bold text-amber-700">Roll number mismatch</p>
+              <p className="text-xs text-amber-600 mt-0.5">
+                PDF contains <span className="font-mono font-bold">{rollMismatch.pdf}</span> but your account is <span className="font-mono font-bold">{rollMismatch.student}</span>.
+                Grades were still imported — please verify this is your result card.
+              </p>
+            </div>
+          </div>
+        )}
 
         {step === 1 && (
           <div className="space-y-4">
@@ -959,6 +989,7 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
           onClose={() => setShowAutoFillModal(false)}
           onApply={handleAutoFillApply}
           existingCourses={courses}
+          studentRollNo={rollNo}
         />
       )}
 
