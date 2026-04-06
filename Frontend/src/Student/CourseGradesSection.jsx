@@ -88,7 +88,6 @@ const GRADE_BADGE_COLORS = {
   I: 'bg-slate-100 text-slate-800 border-slate-300',
 };
 
-// Shared sanitizer — strips HTML tags to prevent XSS via stored text
 const sanitizeText = (str) => str.replace(/<[^>]*>/g, '').replace(/[<>"'`]/g, '');
 
 // ─── Small reusable edit inputs ───────────────────────────────────────────────
@@ -110,7 +109,7 @@ const EGrade = ({ value, onChange }) => (
   <select
     value={value}
     onChange={e => onChange(e.target.value)}
-    className={`w-16 px-1 py-1.5 rounded-lg border-2 font-bold text-sm text-center
+    className={`w-full px-1 py-1.5 rounded-lg border-2 font-bold text-sm text-center
       cursor-pointer transition-all focus:outline-none ${GRADE_BADGE_COLORS[value] || 'border-gray-300 text-gray-700'}`}
   >
     {GRADE_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
@@ -123,7 +122,7 @@ const getMaxSemester = (programStr) => {
   const p = (programStr || '').toLowerCase().replace(/[^a-z]/g, '');
   if (p.includes('btech')) return 8;
   if (p.includes('barch')) return 10;
-  return 10; // Default max fallback
+  return 10;
 };
 
 const AddCourseRow = ({ onAdd, nextId, maxSemester = 10 }) => {
@@ -131,14 +130,12 @@ const AddCourseRow = ({ onAdd, nextId, maxSemester = 10 }) => {
   const [form, setForm] = useState(blank);
   const [forceElective, setForceElective] = useState(false);
   const set = (f, v) => setForm(p => ({ ...p, [f]: v }));
-  // Derived: whether the current category is elective
   const isElective = forceElective;
   const canAdd = form.code.trim() && form.name.trim();
 
   const toggleType = () => {
     const next = !forceElective;
     setForceElective(next);
-    // Auto-set a sensible default category code when toggling
     setForm(p => ({ ...p, category: next ? 'EI' : 'PC' }));
   };
 
@@ -167,28 +164,29 @@ const AddCourseRow = ({ onAdd, nextId, maxSemester = 10 }) => {
         Add New Course
       </p>
 
-      <div className="grid grid-cols-12 gap-2 items-end">
-        <div className="col-span-2">
+      {/* Responsive grid: 2-col on mobile → full grid on md+ */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-12 gap-2 items-end">
+        <div className="col-span-1 sm:col-span-2 md:col-span-2">
           <p className="text-xs text-gray-400 font-semibold mb-1">Code</p>
           <ECell value={form.code} onChange={v => set('code', v)} placeholder="CS3001" />
         </div>
-        <div className="col-span-3">
+        <div className="col-span-2 sm:col-span-4 md:col-span-3">
           <p className="text-xs text-gray-400 font-semibold mb-1">Course Name</p>
           <ECell value={form.name} onChange={v => set('name', v)} placeholder="Course Title" />
         </div>
-        <div className="col-span-1">
-          <p className="text-xs text-gray-400 font-semibold mb-1">Cr.</p>
+        <div className="col-span-1 md:col-span-1">
+          <p className="text-xs text-gray-400 font-semibold mb-1">Credits</p>
           <ECell value={form.credits} onChange={v => {
             let val = parseInt(v);
             if (!isNaN(val) && val > 5) val = 5;
             set('credits', isNaN(val) ? v : String(val));
           }} type="number" placeholder="3" min="1" max="5" />
         </div>
-        <div className="col-span-1">
+        <div className="col-span-1 md:col-span-1">
           <p className="text-xs text-gray-400 font-semibold mb-1">Cat.</p>
           <ECell value={form.category} onChange={v => set('category', v)} placeholder="PC" />
         </div>
-        <div className="col-span-1">
+        <div className="col-span-1 md:col-span-1">
           <p className="text-xs text-gray-400 font-semibold mb-1">Sem</p>
           <ECell value={form.semester} onChange={v => {
             let val = parseInt(v);
@@ -196,12 +194,11 @@ const AddCourseRow = ({ onAdd, nextId, maxSemester = 10 }) => {
             set('semester', isNaN(val) ? v : String(val));
           }} type="number" placeholder="1" min="1" max={maxSemester} />
         </div>
-        <div className="col-span-1">
+        <div className="col-span-1 md:col-span-1">
           <p className="text-xs text-gray-400 font-semibold mb-1">Grade</p>
           <EGrade value={form.grade} onChange={v => set('grade', v)} />
         </div>
-        <div className="col-span-3 flex flex-col gap-1.5 pb-0.5">
-          {/* Core / Elective toggle */}
+        <div className="col-span-2 sm:col-span-4 md:col-span-3 flex flex-col gap-1.5 pb-0.5">
           <button
             type="button"
             onClick={toggleType}
@@ -211,7 +208,7 @@ const AddCourseRow = ({ onAdd, nextId, maxSemester = 10 }) => {
                 : 'bg-indigo-100 border-indigo-400 text-indigo-700 hover:bg-indigo-200'
             }`}
           >
-            {isElective ? '🔀 Elective (click to switch)' : '📘 Core (click to switch)'}
+            {isElective ? '🔀 Elective' : '📘 Core'}
           </button>
           <button
             onClick={handleAdd}
@@ -219,7 +216,7 @@ const AddCourseRow = ({ onAdd, nextId, maxSemester = 10 }) => {
             className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40
               disabled:cursor-not-allowed text-white rounded-lg text-xs font-bold transition-colors"
           >
-            Add
+            Add Course
           </button>
         </div>
       </div>
@@ -228,15 +225,14 @@ const AddCourseRow = ({ onAdd, nextId, maxSemester = 10 }) => {
 };
 
 // ─── AutoFill Modal ───────────────────────────────────────────────────────────
-// cosnt[]
 
 function AutoFillModal({ onClose, onApply, existingCourses }) {
   const [step, setStep]                 = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError]               = useState(null);
   const [mappings, setMappings]         = useState([]);
-  const [parsed, setParsed] = useState(null);
-  
+  const [parsed, setParsed]             = useState(null);
+
   const allExisting = [...existingCourses.core, ...existingCourses.elective];
 
   React.useEffect(() => {
@@ -283,11 +279,12 @@ function AutoFillModal({ onClose, onApply, existingCourses }) {
   const newCount = mappings.length - matchedCount;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">
+    <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 backdrop-blur-sm">
+      {/* Sheet on mobile (slides up), centered modal on sm+ */}
+      <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-2xl p-6 sm:p-8 max-h-[92vh] overflow-y-auto shadow-2xl">
+        <div className="flex items-start justify-between mb-6 gap-3">
+          <div className="min-w-0">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
               {step === 1 ? '📄 Upload Grade Card PDF' : '✅ Review & Apply Grades'}
             </h2>
             <p className="text-sm text-gray-500 mt-1">
@@ -296,7 +293,7 @@ function AutoFillModal({ onClose, onApply, existingCourses }) {
                 : `${matchedCount} matched · ${newCount} will be added as new`}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0">
             <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -308,23 +305,23 @@ function AutoFillModal({ onClose, onApply, existingCourses }) {
             <input type="file" accept="application/pdf" onChange={handleFileUpload}
               className="hidden" id="autofill-pdf-upload" disabled={isProcessing} />
             <label htmlFor="autofill-pdf-upload"
-              className="flex flex-col items-center justify-center gap-4 w-full p-12 border-2 border-dashed
+              className="flex flex-col items-center justify-center gap-4 w-full p-8 sm:p-12 border-2 border-dashed
                 border-indigo-300 rounded-2xl cursor-pointer hover:bg-indigo-50 hover:border-indigo-500 transition-all duration-200">
               {isProcessing ? (
                 <>
-                  <svg className="w-12 h-12 text-indigo-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-10 h-10 sm:w-12 sm:h-12 text-indigo-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
-                  <p className="text-indigo-600 font-semibold text-lg">Processing PDF…</p>
-                  <p className="text-gray-400 text-sm">Extracting grades from your grade card</p>
+                  <p className="text-indigo-600 font-semibold text-base sm:text-lg">Processing PDF…</p>
+                  <p className="text-gray-400 text-sm text-center">Extracting grades from your grade card</p>
                 </>
               ) : (
                 <>
-                  <svg className="w-12 h-12 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-10 h-10 sm:w-12 sm:h-12 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
                   <div className="text-center">
-                    <p className="font-semibold text-gray-700 text-lg">Click to upload PDF grade card</p>
+                    <p className="font-semibold text-gray-700 text-base sm:text-lg">Click to upload PDF grade card</p>
                     <p className="text-sm text-gray-400 mt-1">NIT Calicut grade cards supported</p>
                   </div>
                 </>
@@ -346,11 +343,11 @@ function AutoFillModal({ onClose, onApply, existingCourses }) {
 
         {step === 2 && parsed && (
           <div className="space-y-5">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {[['Semester', parsed.semester ? `Sem ${parsed.semester}` : '—'], ['SGPA', parsed.sgpa || '—'], ['CGPA', parsed.cgpa || '—']].map(([label, val]) => (
-                <div key={label} className="bg-indigo-50 rounded-xl p-3 text-center border border-indigo-100">
+                <div key={label} className="bg-indigo-50 rounded-xl p-2 sm:p-3 text-center border border-indigo-100">
                   <p className="text-xs text-indigo-500 font-semibold uppercase mb-1">{label}</p>
-                  <p className="text-xl font-bold text-indigo-700">{val}</p>
+                  <p className="text-lg sm:text-xl font-bold text-indigo-700">{val}</p>
                 </div>
               ))}
             </div>
@@ -358,35 +355,37 @@ function AutoFillModal({ onClose, onApply, existingCourses }) {
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-green-200 border border-green-400 inline-block" />Matched</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-blue-200 border border-blue-400 inline-block" />Will be added as new</span>
             </div>
-            <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-64 sm:max-h-72 overflow-y-auto pr-1">
               {mappings.map((m) => {
                 const s = parsed.subjects[m.parsedIndex];
                 const isNew = !m.courseId;
                 const willBeElective = ELECTIVE_CATEGORIES.includes(s.category || '');
                 return (
-                  <div key={m.parsedIndex} className={`flex items-center gap-2 p-3 rounded-xl border transition-colors ${isNew ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200'}`}>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="text-sm font-semibold text-gray-800 truncate">{s.subject}</p>
-                        {s.category && (
-                          <span className={`text-xs px-1.5 py-0.5 rounded font-bold flex-shrink-0 ${willBeElective ? 'bg-purple-100 text-purple-700' : 'bg-indigo-100 text-indigo-700'}`}>{s.category}</span>
-                        )}
-                        {isNew && <span className="text-xs bg-blue-600 text-white px-1.5 py-0.5 rounded font-bold flex-shrink-0">+ New</span>}
+                  <div key={m.parsedIndex} className={`p-3 rounded-xl border transition-colors ${isNew ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200'}`}>
+                    {/* Stack vertically on mobile, row on sm+ */}
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-sm font-semibold text-gray-800 truncate">{s.subject}</p>
+                          {s.category && (
+                            <span className={`text-xs px-1.5 py-0.5 rounded font-bold flex-shrink-0 ${willBeElective ? 'bg-purple-100 text-purple-700' : 'bg-indigo-100 text-indigo-700'}`}>{s.category}</span>
+                          )}
+                          {isNew && <span className="text-xs bg-blue-600 text-white px-1.5 py-0.5 rounded font-bold flex-shrink-0">+ New</span>}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-0.5">{s.code} · {s.credits} cr · Sem {parsed.semester}</p>
                       </div>
-                      <p className="text-xs text-gray-400 mt-0.5">{s.code} · {s.credits} cr · Sem {parsed.semester}</p>
+                      <div className="flex items-center gap-2">
+                        <select value={m.courseId} onChange={e => updateMapping(m.parsedIndex, 'courseId', e.target.value)}
+                          className="text-sm border rounded-lg px-2 py-1.5 bg-white flex-1 sm:w-44 sm:flex-none focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                          <option value="">➕ Add as new</option>
+                          {allExisting.map(c => <option key={c.id} value={String(c.id)}>{c.code} – {c.name}</option>)}
+                        </select>
+                        <select value={m.grade} onChange={e => updateMapping(m.parsedIndex, 'grade', e.target.value)}
+                          className={`text-sm font-bold border-2 rounded-lg px-2 py-1.5 flex-shrink-0 w-16 text-center focus:outline-none ${GRADE_COLORS[m.grade] || 'border-gray-300 text-gray-700'}`}>
+                          {GRADE_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
+                        </select>
+                      </div>
                     </div>
-                    <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                    <select value={m.courseId} onChange={e => updateMapping(m.parsedIndex, 'courseId', e.target.value)}
-                      className="text-sm border rounded-lg px-2 py-1.5 bg-white w-44 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-indigo-300">
-                      <option value="">➕ Add as new course</option>
-                      {allExisting.map(c => <option key={c.id} value={String(c.id)}>{c.code} – {c.name}</option>)}
-                    </select>
-                    <select value={m.grade} onChange={e => updateMapping(m.parsedIndex, 'grade', e.target.value)}
-                      className={`text-sm font-bold border-2 rounded-lg px-2 py-1.5 flex-shrink-0 w-16 text-center focus:outline-none ${GRADE_COLORS[m.grade] || 'border-gray-300 text-gray-700'}`}>
-                      {GRADE_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
-                    </select>
                   </div>
                 );
               })}
@@ -400,7 +399,7 @@ function AutoFillModal({ onClose, onApply, existingCourses }) {
                 </div>
               )}
             </div>
-            <div className="flex gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button onClick={onClose} className="flex-1 py-3 border rounded-xl font-semibold hover:bg-gray-50 transition-colors">Cancel</button>
               <button onClick={handleApply} disabled={mappings.length === 0}
                 className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-colors">
@@ -424,20 +423,17 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
   const [pdfFileName,       setPdfFileName]       = useState('');
   const [activeSemester,    setActiveSemester]    = useState(null);
   const [showAutoFillModal, setShowAutoFillModal] = useState(false);
-  const [AutoFillData,       setAutoFillData]       = useState(null); 
+  const [AutoFillData,      setAutoFillData]      = useState(null);
   const [autoFillFlash,     setAutoFillFlash]     = useState([]);
   const [isSubmitting,      setIsSubmitting]      = useState(false);
-  const [submitStatus,      setSubmitStatus]      = useState(null); // 'success' | 'error' | null
+  const [submitStatus,      setSubmitStatus]      = useState(null);
   const [fetchedPDFPath,    setFetchedPDFPath]    = useState(null);
 
-  // When activeSemester changes, clear any locally-staged PDF so the user
-  // can upload a fresh one for the new semester (server-side doc is re-fetched below)
   React.useEffect(() => {
     setUploadedPDF(null);
     setPdfFileName('');
   }, [activeSemester]);
 
-  // When activeSemester or rollNo changes, fetch verification
   React.useEffect(() => {
     if (!rollNo || !activeSemester) return;
     const fetchVerification = async () => {
@@ -462,15 +458,12 @@ export const CourseGradesSection = ({ courses, setCourses, getGradePoint, showSe
     fetchVerification();
   }, [rollNo, activeSemester]);
 
-
   // ── Semester helpers ───────────────────────────────────────────────────────
-const getAllSemesters = () => {
-  const all = [...(courses?.core || []), ...(courses?.elective || [])];
-  return [...new Set(all.map(c => c.semester))].sort((a, b) => a - b);
-};
+  const getAllSemesters = () => {
+    const all = [...(courses?.core || []), ...(courses?.elective || [])];
+    return [...new Set(all.map(c => c.semester))].sort((a, b) => a - b);
+  };
   const allSemesters = getAllSemesters();
-  // console.log('All semesters with courses:', allSemesters);
-  // console.log()
 
   React.useEffect(() => {
     if (showSemester === 'all' && allSemesters.length > 0 && !activeSemester) {
@@ -480,55 +473,43 @@ const getAllSemesters = () => {
     }
   }, [showSemester, JSON.stringify(allSemesters)]);
 
- const filterCoursesBySemester = (coursesData, semester) => {
-  const safeCore     = coursesData?.core     || [];
-  const safeElective = coursesData?.elective || [];
+  const filterCoursesBySemester = (coursesData, semester) => {
+    const safeCore     = coursesData?.core     || [];
+    const safeElective = coursesData?.elective || [];
+    const match = (c) => Number(c.semester) === Number(semester);
+    if (showSemester === 'all' && semester) {
+      return { core: safeCore.filter(match), elective: safeElective.filter(match) };
+    } else if (typeof showSemester === 'number') {
+      const matchFixed = (c) => Number(c.semester) === showSemester;
+      return { core: safeCore.filter(matchFixed), elective: safeElective.filter(matchFixed) };
+    }
+    return { core: safeCore, elective: safeElective };
+  };
 
-  const match = (c) => Number(c.semester) === Number(semester);
-
-  if (showSemester === 'all' && semester) {
-    return { core: safeCore.filter(match), elective: safeElective.filter(match) };
-  } else if (typeof showSemester === 'number') {
-    const matchFixed = (c) => Number(c.semester) === showSemester;
-    return { core: safeCore.filter(matchFixed), elective: safeElective.filter(matchFixed) };
-  }
-  return { core: safeCore, elective: safeElective };
-};
   // ── Edit handlers ──────────────────────────────────────────────────────────
-
   const handleEdit   = () => { setIsEditing(true); setIsDirty(false); setEditCourses(JSON.parse(JSON.stringify(courses))); };
+
   const handleSave = async () => {
     if (!isDirty) return;
-
-    // Find courses that were in `courses` but are missing from `editCourses`
     const oldAll = [...(courses.core || []), ...(courses.elective || [])];
     const newAll = [...(editCourses.core || []), ...(editCourses.elective || [])];
     const newKeys = new Set(newAll.map(c => `${c.code}|${c.semester}`));
-
     const removed = oldAll.filter(c => !newKeys.has(`${c.code}|${c.semester}`));
-
-    // Fire delete requests for each removed course
     for (const c of removed) {
       try {
         await fetch(
           `http://localhost:8080/api/student/courses/${rollNo}?courseCode=${encodeURIComponent(c.code)}&semester=${c.semester}`,
-          {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-          }
+          { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
-      } catch (err) {
-        console.error('Failed to delete course from DB:', err);
-      }
+      } catch (err) { console.error('Failed to delete course from DB:', err); }
     }
-
     setCourses(editCourses);
     setIsEditing(false);
     setIsDirty(false);
   };
+
   const handleCancel = () => { setEditCourses(JSON.parse(JSON.stringify(courses))); setIsEditing(false); setIsDirty(false); };
 
-  // Change any field on an existing course
   const handleFieldChange = (categoryKey, courseId, field, value) => {
     setIsDirty(true);
     setEditCourses(prev => ({
@@ -537,31 +518,26 @@ const getAllSemesters = () => {
         if (c.id !== courseId) return c;
         let newValue = value;
         if (field === 'credits') {
-           let val = parseInt(value) || 0;
-           if (val > 5) val = 5;
-           newValue = val;
+          let val = parseInt(value) || 0;
+          if (val > 5) val = 5;
+          newValue = val;
         }
         if (field === 'semester') {
-           let val = parseInt(value) || 1;
-           const maxSem = getMaxSemester(program);
-           if (val > maxSem) val = maxSem;
-           newValue = val;
+          let val = parseInt(value) || 1;
+          const maxSem = getMaxSemester(program);
+          if (val > maxSem) val = maxSem;
+          newValue = val;
         }
         return { ...c, [field]: newValue };
       })
     }));
   };
 
-  // Delete a course while editing
   const handleDeleteCourse = (categoryKey, courseId) => {
     setIsDirty(true);
-    setEditCourses(prev => ({
-      ...prev,
-      [categoryKey]: prev[categoryKey].filter(c => c.id !== courseId),
-    }));
+    setEditCourses(prev => ({ ...prev, [categoryKey]: prev[categoryKey].filter(c => c.id !== courseId) }));
   };
 
-  // Add brand-new course from AddCourseRow
   const handleAddCourse = ({ _isElective, ...course }) => {
     setIsDirty(true);
     setEditCourses(prev => ({
@@ -577,7 +553,6 @@ const getAllSemesters = () => {
   };
 
   // ── Auto-fill apply ────────────────────────────────────────────────────────
-
   const handleAutoFillApply = ({ mappings }, parsedData) => {
     setAutoFillData(parsedData);
     const pdfSemester = parsedData.semester ? parseInt(parsedData.semester) : null;
@@ -608,8 +583,7 @@ const getAllSemesters = () => {
     if (parsedData.semester && showSemester === 'all') setActiveSemester(parseInt(parsedData.semester));
   };
 
-  // ── PDF upload for submission ──────────────────────────────────────────────
-
+  // ── PDF upload ─────────────────────────────────────────────────────────────
   const handlePDFUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -619,77 +593,45 @@ const getAllSemesters = () => {
   };
   const removePDF = () => { setUploadedPDF(null); setPdfFileName(''); };
 
-  // ── Submit for Verification ───────────────────────────────────────────────
- 
-    
+  // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!uploadedPDF && !fetchedPDFPath) {
       alert('Please attach a PDF grade card before submitting for verification.');
       return;
     }
-
     let cleanCoursesPayload;
     if (AutoFillData) {
-      // Use the parsed PDF data if AutoFill was used
       cleanCoursesPayload = AutoFillData.subjects.map((item) => ({
-        rollNo,
-        semester: parseInt(AutoFillData.semester, 10),
-        courseCode: item.code,
-        courseName: item.subject,
-        credit: parseInt(item.credits, 10),
-        grade: item.grade,
-        courseType: item.category
+        rollNo, semester: parseInt(AutoFillData.semester, 10), courseCode: item.code,
+        courseName: item.subject, credit: parseInt(item.credits, 10), grade: item.grade, courseType: item.category
       }));
     } else {
-      // Fallback: build from the currently displayed (filtered) courses
       const allDisplayed = [...(filtered.core || []), ...(filtered.elective || [])];
-      if (allDisplayed.length === 0) {
-        alert('No course data to submit. Please add courses or use Auto-fill first.');
-        return;
-      }
+      if (allDisplayed.length === 0) { alert('No course data to submit. Please add courses or use Auto-fill first.'); return; }
       cleanCoursesPayload = allDisplayed.map(c => ({
-        rollNo,
-        semester: activeSemester || c.semester,
-        courseCode: c.code,
-        courseName: c.name,
-        credit: parseInt(c.credits, 10) || 0,
-        grade: c.grade,
-        courseType: c.category
+        rollNo, semester: activeSemester || c.semester, courseCode: c.code,
+        courseName: c.name, credit: parseInt(c.credits, 10) || 0, grade: c.grade, courseType: c.category
       }));
     }
-    console.log('Submitting courses:', cleanCoursesPayload);
-    setIsSubmitting(true);
-    setSubmitStatus(null);
+    setIsSubmitting(true); setSubmitStatus(null);
     try {
-      // 1 — Course data as JSON
       const courseRes = await fetch(`http://localhost:8080/api/student/courses/${rollNo}`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
         body: JSON.stringify(cleanCoursesPayload),
       });
       if (!courseRes.ok) throw new Error(`Course submission failed: ${courseRes.status}`);
-
-      // 2 — PDF if attached
       if (uploadedPDF) {
         const fd = new FormData();
-        fd.append('pdf', uploadedPDF);
-        fd.append('rollNo', rollNo || '');
-        fd.append('semester', String(activeSemester || ''));
-        const pdfRes = await fetch('http://localhost:8080/api/student/courses/upload-pdf', { 
-          method: 'POST', 
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-          body: fd 
+        fd.append('pdf', uploadedPDF); fd.append('rollNo', rollNo || ''); fd.append('semester', String(activeSemester || ''));
+        const pdfRes = await fetch('http://localhost:8080/api/student/courses/upload-pdf', {
+          method: 'POST', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: fd
         });
         if (!pdfRes.ok) throw new Error(`PDF upload failed: ${pdfRes.status}`);
       }
-
       setSubmitStatus('success');
     } catch (err) {
-      console.error('Submission error:', err);
-      setSubmitStatus('error');
+      console.error('Submission error:', err); setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
       setTimeout(() => setSubmitStatus(null), 4000);
@@ -698,7 +640,6 @@ const getAllSemesters = () => {
   };
 
   // ── Stats ──────────────────────────────────────────────────────────────────
-
   const calcStats = (list) => {
     let credits = 0, points = 0;
     list.forEach(c => { credits += c.credits; points += getGradePoint(c.grade) * c.credits; });
@@ -710,18 +651,17 @@ const getAllSemesters = () => {
   const coreStats      = calcStats(filtered.core);
   const electiveStats  = calcStats(filtered.elective);
 
-  // ── Render one category ────────────────────────────────────────────────────
-
+  // ── Render course list ─────────────────────────────────────────────────────
   const renderCourseList = (categoryName, categoryKey, stats) => {
     const list = filtered[categoryKey];
     if (!isEditing && list.length === 0) return null;
 
     return (
       <div className="mb-6 last:mb-0">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-gray-200">
-          <h4 className="text-xl font-bold text-gray-900">{categoryName}</h4>
-          <div className="flex gap-4 text-sm">
-            <span className="text-gray-600"><span className="font-semibold">{stats.totalCredits}</span> Credits</span>
+        <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-gray-200 gap-2">
+          <h4 className="text-lg sm:text-xl font-bold text-gray-900">{categoryName}</h4>
+          <div className="flex gap-3 text-sm flex-shrink-0">
+            <span className="text-gray-600"><span className="font-semibold">{stats.totalCredits}</span> Cr</span>
             <span className="text-indigo-700 font-bold">GPA: {stats.gpa}</span>
           </div>
         </div>
@@ -733,40 +673,42 @@ const getAllSemesters = () => {
             if (isEditing) {
               return (
                 <div key={course.id} className="rounded-lg border border-indigo-200 bg-white p-3 shadow-sm">
-                  <div className="grid grid-cols-12 gap-2 items-end">
-                    <div className="col-span-2">
+                  {/* Edit mode: 2-col stacked on mobile, full row on md+ */}
+                  <div className="grid grid-cols-2 md:grid-cols-12 gap-2 items-end">
+                    <div className="col-span-1 md:col-span-2">
                       <p className="text-xs text-gray-400 font-semibold mb-1">Code</p>
                       <ECell value={course.code} onChange={v => handleFieldChange(categoryKey, course.id, 'code', v)} placeholder="CS3001" />
                     </div>
-                    <div className="col-span-4">
+                    <div className="col-span-2 md:col-span-4">
                       <p className="text-xs text-gray-400 font-semibold mb-1">Course Name</p>
                       <ECell value={course.name} onChange={v => handleFieldChange(categoryKey, course.id, 'name', v)} placeholder="Course Title" />
                     </div>
-                    <div className="col-span-1">
+                    <div className="col-span-1 md:col-span-1">
                       <p className="text-xs text-gray-400 font-semibold mb-1">Cr.</p>
                       <ECell value={String(course.credits)} onChange={v => handleFieldChange(categoryKey, course.id, 'credits', v)} type="number" />
                     </div>
-                    <div className="col-span-1">
+                    <div className="col-span-1 md:col-span-1">
                       <p className="text-xs text-gray-400 font-semibold mb-1">Cat.</p>
                       <ECell value={course.category} onChange={v => handleFieldChange(categoryKey, course.id, 'category', v)} placeholder="PC" />
                     </div>
-                    <div className="col-span-1">
+                    <div className="col-span-1 md:col-span-1">
                       <p className="text-xs text-gray-400 font-semibold mb-1">Sem</p>
                       <ECell value={String(course.semester)} onChange={v => handleFieldChange(categoryKey, course.id, 'semester', v)} type="number" />
                     </div>
-                    <div className="col-span-1">
+                    <div className="col-span-1 md:col-span-1">
                       <p className="text-xs text-gray-400 font-semibold mb-1">Grade</p>
                       <EGrade value={course.grade} onChange={v => handleFieldChange(categoryKey, course.id, 'grade', v)} />
                     </div>
-                    <div className="col-span-2 flex justify-end pb-0.5">
+                    <div className="col-span-2 md:col-span-2 flex justify-end pb-0.5">
                       <button
                         onClick={() => handleDeleteCourse(categoryKey, course.id)}
                         title="Remove course"
-                        className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
+                        <span className="text-xs font-medium md:hidden">Remove</span>
                       </button>
                     </div>
                   </div>
@@ -774,30 +716,35 @@ const getAllSemesters = () => {
               );
             }
 
-            // Read-only display row
+            // Read-only display — stacks on mobile
             return (
-              <div key={course.id} className={`rounded-lg p-4 border transition-all duration-500
+              <div key={course.id} className={`rounded-lg p-3 sm:p-4 border transition-all duration-500
                 ${flashed ? 'bg-indigo-50 border-indigo-400 ring-2 ring-indigo-300 scale-[1.01]' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`}>
-                <div className="grid grid-cols-12 gap-4 items-center">
-                  <div className="col-span-2">
+                {/* Mobile: stacked layout; sm+: grid row */}
+                <div className="flex flex-col sm:grid sm:grid-cols-12 sm:gap-4 sm:items-center gap-2">
+                  {/* Code + name row (always visible) */}
+                  <div className="sm:col-span-2">
                     <span className="font-mono text-sm font-bold text-indigo-700">{course.code}</span>
                   </div>
-                  <div className="col-span-5 flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-gray-900">{course.name}</span>
+                  <div className="sm:col-span-5 flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-gray-900 text-sm sm:text-base">{course.name}</span>
                     {flashed && <span className="text-xs bg-indigo-600 text-white px-2 py-0.5 rounded-full font-semibold animate-pulse">Auto-filled</span>}
                   </div>
-                  <div className="col-span-2 text-center">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 text-sm font-semibold">
-                      {course.credits} Credits
-                    </span>
-                  </div>
-                  <div className="col-span-2 text-center">
-                    <span className={`inline-flex items-center justify-center w-12 h-12 rounded-lg border-2 font-bold text-lg ${GRADE_BADGE_COLORS[course.grade] || 'border-gray-200 text-gray-700'}`}>
-                      {course.grade}
-                    </span>
-                  </div>
-                  <div className="col-span-1 text-right">
-                    <span className="text-xs text-gray-500">Sem {course.semester}</span>
+                  {/* Credits + grade + semester row on mobile */}
+                  <div className="flex items-center justify-between sm:contents">
+                    <div className="sm:col-span-2 sm:text-center">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-800 text-xs sm:text-sm font-semibold">
+                        {course.credits} Credits
+                      </span>
+                    </div>
+                    <div className="sm:col-span-2 sm:text-center">
+                      <span className={`inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-lg border-2 font-bold text-base sm:text-lg ${GRADE_BADGE_COLORS[course.grade] || 'border-gray-200 text-gray-700'}`}>
+                        {course.grade}
+                      </span>
+                    </div>
+                    <div className="sm:col-span-1 sm:text-right">
+                      <span className="text-xs text-gray-500">Sem {course.semester}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -815,63 +762,62 @@ const getAllSemesters = () => {
   };
 
   // ── JSX ────────────────────────────────────────────────────────────────────
-
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-6 transition-all duration-300 hover:shadow-2xl h-full flex flex-col">
+    <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 transition-all duration-300 hover:shadow-2xl h-full flex flex-col">
 
-      {/* Header - hide Edit/AutoFill if readOnly */}
-      <div className="flex items-center justify-between mb-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
         <div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-1">Course Grades</h3>
-          <p className="text-gray-500">Academic performance overview</p>
+          <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Course Grades</h3>
+          <p className="text-gray-500 text-sm">Academic performance overview</p>
         </div>
-        <div className="flex items-center gap-2">
-          {!readOnly && !isEditing && (
-            <button onClick={() => setShowAutoFillModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors text-sm">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
-              Auto-fill PDF
-            </button>
-          )}
-          {!readOnly && !isEditing && (
-            <button onClick={handleEdit}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              Edit
-            </button>
-          )}
-          {!readOnly && isEditing && (
-            <div className="flex gap-2">
-              <button
-                onClick={handleSave}
-                disabled={!isDirty}
-                className={`px-5 py-2 rounded-lg font-medium transition-colors ${
-                  isDirty
-                    ? 'bg-green-600 hover:bg-green-700 text-white'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                Save
+        {!readOnly && (
+          <div className="flex items-center gap-2 flex-wrap">
+            {!isEditing && (
+              <button onClick={() => setShowAutoFillModal(true)}
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors text-sm">
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <span className="hidden xs:inline">Auto-fill PDF</span>
+                <span className="xs:hidden">Auto-fill</span>
               </button>
-              <button onClick={handleCancel} className="bg-gray-400 hover:bg-gray-500 text-white px-5 py-2 rounded-lg font-medium transition-colors">Cancel</button>
-            </div>
-          )}
-        </div>
+            )}
+            {!isEditing && (
+              <button onClick={handleEdit}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 sm:px-5 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 text-sm">
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit
+              </button>
+            )}
+            {isEditing && (
+              <div className="flex gap-2">
+                <button onClick={handleSave} disabled={!isDirty}
+                  className={`px-4 sm:px-5 py-2 rounded-lg font-medium transition-colors text-sm ${
+                    isDirty ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  }`}>
+                  Save
+                </button>
+                <button onClick={handleCancel} className="bg-gray-400 hover:bg-gray-500 text-white px-4 sm:px-5 py-2 rounded-lg font-medium transition-colors text-sm">
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Semester Tabs */}
+      {/* Semester Tabs — scrollable on mobile */}
       {showSemester === 'all' && allSemesters.length > 1 && (
         <div className="mb-6">
-          <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg overflow-x-auto">
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-gray-100 p-1 rounded-lg overflow-x-auto no-scrollbar">
             {allSemesters.map(sem => (
-              <button  onClick={() => setActiveSemester(sem)}
-                className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-all duration-200
+              <button key={sem} onClick={() => setActiveSemester(sem)}
+                className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap transition-all duration-200 flex-shrink-0
                   ${activeSemester === sem ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'}`}>
-                Semester {sem}
+                Sem {sem}
               </button>
             ))}
           </div>
@@ -879,88 +825,86 @@ const getAllSemesters = () => {
       )}
 
       {/* Course list */}
-      <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto pr-1 sm:pr-2 custom-scrollbar">
         {!isEditing && filtered.core.length === 0 && filtered.elective.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-400">
+          <div className="flex items-center justify-center h-full text-gray-400 py-12">
             <div className="text-center">
-              <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <p className="font-medium">No courses for this semester</p>
-              <p className="text-sm">Use Auto-fill PDF or Edit to add grades manually</p>
+              <p className="text-sm mt-1">Use Auto-fill PDF or Edit to add grades manually</p>
             </div>
           </div>
         ) : (
           <>
             {renderCourseList('Core Courses',     'core',     coreStats)}
             {renderCourseList('Elective Courses', 'elective', electiveStats)}
-            {/* Add new course row — only in edit mode, when list has content */}
             {isEditing && (filtered.core.length > 0 || filtered.elective.length > 0) && (
               <AddCourseRow onAdd={handleAddCourse} nextId={nextId()} maxSemester={getMaxSemester(program)} />
             )}
           </>
         )}
-        {/* Add new course row in edit mode when list is empty */}
         {isEditing && filtered.core.length === 0 && filtered.elective.length === 0 && (
           <AddCourseRow onAdd={handleAddCourse} nextId={nextId()} maxSemester={getMaxSemester(program)} />
         )}
       </div>
 
-        {/* Footer — only shown when NOT read-only */}
-        {!readOnly && (
+      {/* Footer */}
+      {!readOnly && (
         <div className="mt-6 pt-6 border-t border-gray-200 space-y-4">
 
-          {/* PDF attach box */}
-          <div className="bg-indigo-50 p-4 rounded-lg border-2 border-indigo-200">
-            <p className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
-              <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {/* PDF attach */}
+          <div className="bg-indigo-50 p-3 sm:p-4 rounded-lg border-2 border-indigo-200">
+            <p className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2 flex-wrap">
+              <svg className="w-5 h-5 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
-              Attach {showSemester === 'all' && activeSemester ? `Semester ${activeSemester}` : 'Current Semester'} Grade Card (PDF)
+              <span>
+                Attach {showSemester === 'all' && activeSemester ? `Semester ${activeSemester}` : 'Current Semester'} Grade Card (PDF)
+              </span>
               <span className="text-red-500 text-xs font-bold">(Required)</span>
             </p>
-          {!uploadedPDF && !fetchedPDFPath ? (
-            <>
-              <input type="file" accept="application/pdf" onChange={handlePDFUpload} className="hidden" id="pdf-upload" />
-              <label htmlFor="pdf-upload"
-                className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-white border-2 border-dashed border-indigo-300
-                  rounded-lg cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-all duration-200">
-                <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                <span className="text-indigo-700 font-medium">Click to attach PDF</span>
-              </label>
-            </>
-          ) : (
-            <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-indigo-300">
-              <div className="flex items-center gap-3">
-                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-                <div>
-                  <p className="font-semibold text-gray-900 text-sm">{pdfFileName}</p>
-                  <p className="text-xs text-gray-500">
-                     {fetchedPDFPath ? 'Currently saved verification document' : 'Will be sent with verification request'}
-                  </p>
+            {!uploadedPDF && !fetchedPDFPath ? (
+              <>
+                <input type="file" accept="application/pdf" onChange={handlePDFUpload} className="hidden" id="pdf-upload" />
+                <label htmlFor="pdf-upload"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-white border-2 border-dashed border-indigo-300
+                    rounded-lg cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-all duration-200">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span className="text-indigo-700 font-medium text-sm sm:text-base">Click to attach PDF</span>
+                </label>
+              </>
+            ) : (
+              <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-indigo-300 gap-2">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <svg className="w-7 h-7 sm:w-8 sm:h-8 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-900 text-sm truncate">{pdfFileName}</p>
+                    <p className="text-xs text-gray-500">{fetchedPDFPath ? 'Currently saved document' : 'Will be sent with verification'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {fetchedPDFPath && (
+                    <button onClick={() => window.open(`http://localhost:8080/${fetchedPDFPath}`)}
+                      className="text-indigo-600 hover:text-indigo-800 p-1.5 sm:p-2 hover:bg-indigo-50 rounded-lg transition-colors font-semibold text-sm">
+                      View
+                    </button>
+                  )}
+                  <button onClick={() => { removePDF(); setFetchedPDFPath(null); }} className="text-red-500 hover:text-red-700 p-1.5 sm:p-2 hover:bg-red-50 rounded-lg transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                {fetchedPDFPath && (
-                  <button onClick={() => window.open(`http://localhost:8080/${fetchedPDFPath}`)} 
-                    className="text-indigo-600 hover:text-indigo-800 p-2 hover:bg-indigo-50 rounded-lg transition-colors font-semibold text-sm">
-                    View Doc
-                  </button>
-                )}
-                <button onClick={() => { removePDF(); setFetchedPDFPath(null); }} className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-colors">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          )}
-          <p className="text-xs text-gray-500 mt-2">Required — your advisor will use this to verify your grades</p>
-        </div>
+            )}
+            <p className="text-xs text-gray-500 mt-2">Required — your advisor will use this to verify your grades</p>
+          </div>
 
           {/* Status banners */}
           {submitStatus === 'success' && (
@@ -986,7 +930,7 @@ const getAllSemesters = () => {
             disabled={isSubmitting || (!uploadedPDF && !fetchedPDFPath)}
             className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700
               disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 rounded-lg font-bold transition-all
-              duration-200 transform hover:scale-[1.02] shadow-lg flex items-center justify-center gap-2"
+              duration-200 transform hover:scale-[1.02] shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base"
           >
             {isSubmitting ? (
               <>
@@ -1000,27 +944,31 @@ const getAllSemesters = () => {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                {(!uploadedPDF && !fetchedPDFPath) ? 'Attach PDF to Submit' : `Submit for Verification${uploadedPDF ? ' (with PDF)' : ''}`}
+                {(!uploadedPDF && !fetchedPDFPath)
+                  ? 'Attach PDF to Submit'
+                  : `Submit for Verification${uploadedPDF ? ' (with PDF)' : ''}`}
               </>
             )}
           </button>
         </div>
-        )}
+      )}
 
       {/* Auto-fill modal */}
       {showAutoFillModal && (
         <AutoFillModal
           onClose={() => setShowAutoFillModal(false)}
-          onApply={handleAutoFillApply }
+          onApply={handleAutoFillApply}
           existingCourses={courses}
         />
       )}
 
       <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a5b4fc; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </div>
   );

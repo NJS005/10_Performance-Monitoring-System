@@ -1,7 +1,29 @@
 import React from 'react';
 import { Card } from '../../../components/ui/Card';
 
+const getCurrentSemester = (batchYear, fallbackSemester) => {
+  if (!batchYear) return fallbackSemester;
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1; // 1–12
+
+  const academicYearsCompleted =
+    month >= 7
+      ? year - batchYear
+      : year - batchYear - 1;
+
+  const isOddSemester = month >= 7 && month <= 11;
+
+  const sem = academicYearsCompleted * 2 + (isOddSemester ? 1 : 2);
+
+  return sem > 0 ? sem : fallbackSemester;
+};
+
 const StudentCard = ({ student }) => {
+  const batchYear = student.batchYear ?? student.batch;
+  const currentSemester = getCurrentSemester(batchYear, student.semester);
+
   return (
     <Card className="p-6">
       <div className="flex items-start space-x-6">
@@ -17,10 +39,6 @@ const StudentCard = ({ student }) => {
               <h2 className="text-2xl font-bold text-slate-900">{student.name}</h2>
               <p className="text-slate-600 mt-1">{student.rollNumber}</p>
             </div>
-            <div className="text-right">
-              <div className="text-sm text-slate-500">CGPA</div>
-              <div className="text-2xl font-bold text-indigo-600">{student.cgpa}</div>
-            </div>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
@@ -34,11 +52,11 @@ const StudentCard = ({ student }) => {
             </div>
             <div>
               <div className="text-sm text-slate-500">Semester</div>
-              <div className="font-medium text-slate-900">Semester {student.semester}</div>
+              <div className="font-medium text-slate-900">Semester {currentSemester}</div>
             </div>
             <div>
               <div className="text-sm text-slate-500">Email</div>
-              <div className="font-medium text-slate-900 text-sm truncate">{student.email}</div>
+              <div className="font-medium text-slate-900">{student.email || '-'}</div>
             </div>
           </div>
         </div>

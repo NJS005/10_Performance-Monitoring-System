@@ -14,6 +14,25 @@ import { Button } from '../../../components/ui/Button';
 import { SearchInput } from '../../../components/ui/SearchInput';
 import { useStudents } from '../hooks/useStudents';
 
+const getCurrentSemester = (batchYear, fallbackSemester) => {
+  if (!batchYear) return fallbackSemester;
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1; // 1–12
+
+  const academicYearsCompleted =
+    month >= 7
+      ? year - batchYear
+      : year - batchYear - 1;
+
+  const isOddSemester = month >= 7 && month <= 11;
+
+  const sem = academicYearsCompleted * 2 + (isOddSemester ? 1 : 2);
+
+  return sem > 0 ? sem : fallbackSemester;
+};
+
 const StudentsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -81,16 +100,13 @@ const StudentsPage = () => {
       {
         accessorKey: 'semester',
         header: 'Semester',
-        cell: ({ getValue }) => (
-          <span className="text-sm text-slate-900">Sem {getValue()}</span>
-        )
-      },
-      {
-        accessorKey: 'cgpa',
-        header: 'CGPA',
-        cell: ({ getValue }) => (
-          <span className="text-sm font-medium text-gray-900">{getValue()}</span>
-        )
+        cell: ({ row, getValue }) => {
+          const batchYear = row.original.batchYear ?? row.original.batch;
+          const currentSemester = getCurrentSemester(batchYear, getValue());
+          return (
+            <span className="text-sm text-slate-900">Sem {currentSemester}</span>
+          );
+        }
       },
       {
         accessorKey: 'status',

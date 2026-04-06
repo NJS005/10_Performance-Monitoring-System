@@ -70,6 +70,10 @@ public class Student {
         private String verificationStatus;
         private String date;
 
+                // Not stored in students table: resolved from users table
+                @Transient
+                private String email;
+
 
         public Student() {
         }
@@ -249,6 +253,14 @@ public class Student {
         public void setVerificationStatus(String verificationStatus) {
                 this.verificationStatus = verificationStatus;
         }
+
+                public String getEmail() {
+                        return email;
+                }
+
+                public void setEmail(String email) {
+                        this.email = email;
+                }
 
         
 
