@@ -28,6 +28,9 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import com.performance.Monitoring.Modal.Courses;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.performance.Monitoring.Modal.User;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
@@ -47,7 +50,6 @@ public class StudentController {
     @Autowired
     private RateLimiter rateLimiter;
 
-    @PreAuthorize("@securityService.canWriteStudent(#student.rollNo)")
     @PostMapping("/details")
     public ResponseEntity<String> getStudentDetails(@RequestBody Student student,
                                                     HttpServletRequest request) {
@@ -56,6 +58,26 @@ public class StudentController {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                     .body("Too many requests. Please slow down.");
         }
+
+        // Derive the rollNo from the authenticated user's JWT email
+        // (email format: prefix_ROLLNO@nitc.ac.in) — override whatever the client sent
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof User)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        User currentUser = (User) auth.getPrincipal();
+        String email = currentUser.getEmail();
+        if (email != null && email.contains("_")) {
+            String derivedRollNo = email.split("_")[1].split("@")[0].toUpperCase();
+            student.setRollNo(derivedRollNo);
+        }
+
+        // Verify the requesting user is writing their own record
+        if (!"Student".equalsIgnoreCase(currentUser.getRole()) &&
+                !"Admin".equalsIgnoreCase(currentUser.getRole())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+        }
+
         studentService.putStudentDetails(student);
         System.out.println("Received student details: " + student);
         return ResponseEntity.ok("Student details submitted successfully");

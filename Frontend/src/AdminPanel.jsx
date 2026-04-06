@@ -304,7 +304,13 @@ export default function AdminPanel() {
       if (res.ok) {
         setData(data.filter(item => item[activeConfig.idField] !== id));
       } else {
-        alert("Failed to delete record.");
+        // Try to parse a meaningful error from the server response
+        try {
+          const errorBody = await res.json();
+          alert(errorBody.error || "Failed to delete record.");
+        } catch {
+          alert("Failed to delete record.");
+        }
       }
     } catch (error) {
       console.error("Delete error:", error);

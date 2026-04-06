@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.transaction.annotation.Transactional;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -159,10 +160,35 @@ public class SystemAdminController {
         return ResponseEntity.ok(studentRepo.save(existing));
     }
 
+    @Transactional
     @DeleteMapping("/students/{id}")
     public ResponseEntity<Void> deleteStudent(@PathVariable String id) {
-        if (!studentRepo.existsById(id)) return ResponseEntity.notFound().build();
-        studentRepo.deleteById(id);
+        Optional<Student> studentOpt = studentRepo.findById(id);
+        if (studentOpt.isEmpty()) return ResponseEntity.notFound().build();
+        String rollNo = studentOpt.get().getRollNo();
+
+        // 1. Delete all child records keyed by rollNo
+        coursesRepo.deleteAll(coursesRepo.findAll().stream()
+                .filter(c -> rollNo.equalsIgnoreCase(c.getRollNo())).toList());
+        attendanceRepo.deleteAll(attendanceRepo.findAll().stream()
+                .filter(a -> rollNo.equalsIgnoreCase(a.getRollNo())).toList());
+        dailyAttendanceRepo.deleteAll(dailyAttendanceRepo.findAll().stream()
+                .filter(d -> rollNo.equalsIgnoreCase(d.getRollNo())).toList());
+        coCurricularRepo.deleteAll(coCurricularRepo.findAll().stream()
+                .filter(c -> rollNo.equalsIgnoreCase(c.getRollNo())).toList());
+        courseVerificationRepo.deleteAll(courseVerificationRepo.findAll().stream()
+                .filter(v -> rollNo.equalsIgnoreCase(v.getRollNo())).toList());
+
+        // 2. Delete the student record
+        studentRepo.deleteById(rollNo);
+
+        // 3. Cascade: also remove the matching row from the users table
+        userRepo.findAll().stream()
+                .filter(u -> u.getEmail() != null &&
+                        u.getEmail().toUpperCase().contains("_" + rollNo.toUpperCase() + "@"))
+                .findFirst()
+                .ifPresent(userRepo::delete);
+
         return ResponseEntity.ok().build();
     }
 

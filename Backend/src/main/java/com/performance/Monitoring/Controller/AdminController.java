@@ -3,6 +3,7 @@ package com.performance.Monitoring.Controller;
 import com.performance.Monitoring.Modal.Faculty;
 import com.performance.Monitoring.Modal.User;
 import com.performance.Monitoring.Repo.FacultyRepo;
+import com.performance.Monitoring.Repo.StudentRepo;
 import com.performance.Monitoring.Repo.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -22,9 +23,11 @@ public class AdminController {
     @Autowired
     private UserRepo userRepo;
 
-
     @Autowired
     private FacultyRepo facultyRepo;
+
+    @Autowired
+    private StudentRepo studentRepo;
 
     @Autowired
     private com.performance.Monitoring.Repo.DepartmentRepo departmentRepo;
@@ -74,7 +77,7 @@ public class AdminController {
                 faculty.setContactNo(Long.parseLong(contactObj.toString()));
             }
 
-            facultyRepo.save(faculty); // 🛑 Saves to your faculty table!
+            facultyRepo.save(faculty);
         }
 
         return ResponseEntity.ok(savedUser);
@@ -135,7 +138,19 @@ public class AdminController {
         if (userOpt.isPresent()) {
             User user = userOpt.get();
 
-            // If we are deleting a Faculty Advisor, remove them from the Faculty table first
+            // BLOCK: if this student still has an entry in the students table,
+            // they must be deleted from the Students table first (which cascades here).
+            if ("Student".equalsIgnoreCase(user.getRole())) {
+                boolean hasStudentRecord = studentRepo.findAll().stream()
+                        .anyMatch(s -> s.getRollNo() != null && user.getEmail() != null &&
+                                user.getEmail().toUpperCase().contains("_" + s.getRollNo().toUpperCase() + "@"));
+                if (hasStudentRecord) {
+                    return ResponseEntity.status(409)
+                            .body("{\"error\": \"This student has an active academic record. Please delete them from the Students table instead, which will also remove this user entry.\"}" );
+                }
+            }
+
+            // If deleting a Faculty Advisor, remove them from the Faculty table first
             if ("Faculty Advisor".equalsIgnoreCase(user.getRole())) {
                 facultyRepo.findByEmail(user.getEmail()).ifPresent(faculty -> facultyRepo.delete(faculty));
             }
@@ -146,3 +161,4 @@ public class AdminController {
         return ResponseEntity.notFound().build();
     }
 }
+

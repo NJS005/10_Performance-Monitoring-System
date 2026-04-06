@@ -8,6 +8,7 @@ import com.performance.Monitoring.Modal.User;
 import com.performance.Monitoring.Modal.Faculty;
 import com.performance.Monitoring.Repo.UserRepo;
 import com.performance.Monitoring.Repo.FacultyRepo;
+import com.performance.Monitoring.Repo.StudentRepo;
 import com.performance.Monitoring.Security.RateLimiter;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,6 +31,9 @@ public class AuthController {
 
     @Autowired
     private FacultyRepo facultyRepository;
+
+    @Autowired
+    private StudentRepo studentRepository;
 
     @Autowired
     private RateLimiter rateLimiter;
@@ -83,10 +87,19 @@ public class AuthController {
                         user.setName(facultyName);
                         userRepository.save(user);
                     }
+                    // Check if student has completed profile setup.
+                    // Email format: <prefix>_<ROLLNO>@nitc.ac.in → extract just ROLLNO
+                    boolean studentExists = "Student".equalsIgnoreCase(user.getRole())
+                            ? studentRepository.existsById(
+                                    user.getEmail().contains("_")
+                                    ? user.getEmail().split("_")[1].split("@")[0].toUpperCase()
+                                    : user.getEmail().split("@")[0].toUpperCase())
+                            : true;
                     return ResponseEntity.ok(Map.of(
                             "Existing User", "Login successful",
                             "user", user,
-                            "email", email
+                            "email", email,
+                            "studentExists", studentExists
                     ));
 
                 } else {
@@ -100,7 +113,8 @@ public class AuthController {
                     return ResponseEntity.ok(Map.of(
                             "New User", "Login successful",
                             "user", user ,
-                            "email", email
+                            "email", email,
+                            "studentExists", false
                     ));
                 }
 

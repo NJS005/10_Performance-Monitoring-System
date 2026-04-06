@@ -139,13 +139,28 @@ export default function StudentDetailCollection() {
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
+  // Extract rollNo, batch year, and program from email
+  // Format: prefix_B230483CS@nitc.ac.in
+  //   B/M/P = program code, YY = last 2 digits of batch year, rest = number+dept
+  const extractFromEmail = (email) => {
+    if (!email || !email.includes('_')) return { rollNo: '', batch: '', program: '' };
+    const rollNo = email.split('_')[1]?.split('@')[0]?.toUpperCase() || '';
+    const match = rollNo.match(/^([BMP])(\d{2})/);
+    if (!match) return { rollNo, batch: '', program: '' };
+    const programMap = { B: 'B.Tech', M: 'M.Tech', P: 'PhD' };
+    const batch = `20${match[2]}`;
+    const program = programMap[match[1]] || '';
+    return { rollNo, batch, program };
+  };
+  const { rollNo: derivedRollNo, batch: derivedBatch, program: derivedProgram } = extractFromEmail(user.email);
+
   const [formData, setFormData] = useState({
     name: user.name || "",
-    batch: "",
+    batch: derivedBatch,
     contactNo: "",
-    rollNo: "",
+    rollNo: derivedRollNo,
     department: "",
-    program: "",
+    program: derivedProgram,
     facultyAdvisor: "",
     supervisor: "",
     permanentAddress:  { line1: "", line2: "", city: "", state: "", country: "India", zip: "" },
@@ -346,11 +361,12 @@ export default function StudentDetailCollection() {
               <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
                   <InputField label="Full Name"   value={formData.name}   onChange={(v) => handleChange("name", v)}   required error={errors.name} />
-                  <InputField label="Roll Number" value={formData.rollNo} onChange={(v) => handleChange("rollNo", v)} required error={errors.rollNo} />
+                  <InputField label="Roll Number" value={formData.rollNo} onChange={() => {}} required error={errors.rollNo}
+                    placeholder="Auto-filled from your email" disabled />
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-                  <InputField label="Batch / Year" value={formData.batch} onChange={(v) => handleChange("batch", v)} placeholder="e.g. 2023" required error={errors.batch} />
+                  <InputField label="Batch / Year" value={formData.batch} onChange={() => {}} placeholder="Auto-filled from your email" required error={errors.batch} disabled />
                   <InputField
                     label="Contact Number"
                     value={formData.contactNo}

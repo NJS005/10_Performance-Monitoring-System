@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Sparkles, TrendingUp, BookOpen, Target, Lightbulb } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 const AcademicChatbot = ({ courses, studentData, currentCGPA, getGradePoint }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -358,7 +359,7 @@ What would you like to know?`,
   };
 
   
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputMessage.trim() || isTyping) return;
 
     const userMessage = {
@@ -373,20 +374,46 @@ What would you like to know?`,
     setInputMessage('');
     setIsTyping(true);
 
-    
-    setTimeout(() => {
-      const botResponse = generateResponse(currentQuestion);
-      
+    try {
+      const response = await fetch(`http://localhost:8080/api/student/chat/${studentData.rollNo}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ message: currentQuestion }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const botMessage = {
+          id: messages.length + 2,
+          type: 'bot',
+          content: data.response,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, botMessage]);
+      } else {
+        const botMessage = {
+          id: messages.length + 2,
+          type: 'bot',
+          content: "Sorry, I am having trouble connecting to my academic database. Check if the API key is valid.",
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, botMessage]);
+      }
+    } catch (error) {
+      console.error(error);
       const botMessage = {
         id: messages.length + 2,
         type: 'bot',
-        content: botResponse,
+        content: "Error connecting to the backend. Please ensure the server is running.",
         timestamp: new Date()
       };
-
       setMessages(prev => [...prev, botMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1000 + Math.random() * 1000); // Random delay 1-2 seconds
+    }
   };
 
  
@@ -472,7 +499,13 @@ What would you like to know?`,
                       : 'bg-white border-2 border-gray-200 text-gray-800 shadow-md'
                   }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                  {message.type === 'user' ? (
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                  ) : (
+                    <div className="text-sm whitespace-pre-wrap leading-relaxed markdown-body">
+                      <ReactMarkdown>{message.content}</ReactMarkdown>
+                    </div>
+                  )}
                   <p className={`text-xs mt-2 ${message.type === 'user' ? 'text-purple-100' : 'text-gray-400'}`}>
                     {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
@@ -497,7 +530,7 @@ What would you like to know?`,
           </div>
 
           {/* Quick Actions */}
-          {messages.length === 1 && !isTyping && (
+          {!isTyping && (
             <div className="px-4 py-3 bg-white border-t border-gray-200">
               <p className="text-xs text-gray-500 mb-2 font-semibold">Quick Questions:</p>
               <div className="grid grid-cols-2 gap-2">

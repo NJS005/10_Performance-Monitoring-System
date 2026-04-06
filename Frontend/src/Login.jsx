@@ -62,11 +62,12 @@ export default function LoginPage() {
         localStorage.setItem("token", credentialResponse.credential);
         if (selectedRole === "Student") {
           const rollNo = data.user.email.split('_')[1].split('@')[0].toUpperCase();
-          if (data["Existing User"]) {
+          if (data.studentExists === true) {
             alert("Welcome back, " + data.user.name + "!");
             Navigate("/student", { state: { rollNo } });
           } else {
-            alert("Welcome, " + data.user.name + "! Your account has been created.");
+            // Either brand new student, or they left account setup midway
+            alert("Welcome, " + data.user.name + "! Please complete your profile setup.");
             Navigate("/student/details", { state: { rollNo } });
           }
         } else if (selectedRole === "Faculty Advisor") Navigate("/faculty/dashboard");
