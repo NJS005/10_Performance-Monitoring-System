@@ -26,7 +26,11 @@ const FacultyLayout = () => {
       )}
 
       {/* Main Content */}
-      <div className={`transition-all duration-300 lg:${sidebarOpen ? 'ml-64' : 'ml-20'}`}>
+      <div
+        className={`transition-all duration-300 ${
+          sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
+        }`}
+      >
         <Topbar
           toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           toggleMobile={() => setMobileOpen(!mobileOpen)}
