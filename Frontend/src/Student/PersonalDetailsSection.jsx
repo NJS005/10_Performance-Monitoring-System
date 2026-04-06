@@ -133,7 +133,7 @@ const AddressBlock = ({ title, data, prefix, isEditing, editData, handleChange, 
         </div>
       ) : (
         <div style={{ padding: "12px 14px" }}>
-          <p style={{ fontSize: "13px", color: "#475569", lineHeight: "1.6" }}>{formatAddress(addr)}</p>
+          <p style={{ fontSize: "13px", color: "#475569", lineHeight: "1.6", margin: 0 }}>{formatAddress(addr)}</p>
         </div>
       )}
     </div>
@@ -227,7 +227,6 @@ export const PersonalDetailsSection = ({
   const advisorValue     = isFacultyProgram ? studentData.facultyAdvisor : studentData.supervisor;
   const advisorEditField = isFacultyProgram ? "facultyAdvisor" : "supervisor";
 
-  // Status badge config
   const vs = verificationStatus === true ? "verified"
            : verificationStatus === false ? "pending"
            : verificationStatus || "pending";
@@ -250,6 +249,113 @@ export const PersonalDetailsSection = ({
         .pds-cancel-btn:hover { background: #cbd5e1 !important; }
         .pds-showall-btn:hover { color: #3730a3 !important; }
         .pds-field-value { transition: background 0.2s; }
+
+        /* ── Responsive grid helpers ── */
+        .pds-grid-3 {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 18px;
+        }
+        .pds-grid-3-contact {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 18px;
+        }
+        .pds-grid-2 {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 14px;
+        }
+        /* Header layout */
+        .pds-header {
+          padding: 22px 28px;
+          border-bottom: 1px solid #eef0fa;
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+        .pds-header-actions {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-shrink: 0;
+          flex-wrap: wrap;
+        }
+        /* Body padding */
+        .pds-body {
+          padding: 24px 28px;
+        }
+        /* Lock notice */
+        .pds-lock-notice {
+          display: flex;
+          align-items: flex-start;
+          gap: 6px;
+          background: rgba(99,102,241,0.06);
+          border: 1px solid rgba(99,102,241,0.2);
+          border-radius: 8px;
+          padding: 8px 14px;
+          margin-bottom: 16px;
+        }
+        .pds-lock-notice span:last-child {
+          font-size: 12px;
+          color: #4f46e5;
+          font-weight: 600;
+          line-height: 1.5;
+        }
+
+        /* ── Tablet (≤ 768px) ── */
+        @media (max-width: 768px) {
+          .pds-header {
+            padding: 18px 20px;
+          }
+          .pds-body {
+            padding: 18px 20px;
+          }
+          .pds-grid-3 {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+          }
+          .pds-grid-3-contact {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+          }
+          .pds-header-actions {
+            width: 100%;
+            justify-content: flex-end;
+          }
+        }
+
+        /* ── Mobile (≤ 480px) ── */
+        @media (max-width: 480px) {
+          .pds-header {
+            padding: 14px 16px;
+            gap: 10px;
+          }
+          .pds-body {
+            padding: 14px 16px;
+          }
+          .pds-grid-3 {
+            grid-template-columns: 1fr;
+            gap: 12px;
+          }
+          .pds-grid-3-contact {
+            grid-template-columns: 1fr;
+            gap: 12px;
+          }
+          .pds-grid-2 {
+            grid-template-columns: 1fr;
+            gap: 12px;
+          }
+          .pds-header-actions {
+            width: 100%;
+            justify-content: space-between;
+          }
+          .pds-title {
+            font-size: 17px !important;
+          }
+        }
       `}</style>
 
       <div className="pds-root" style={{
@@ -261,16 +367,9 @@ export const PersonalDetailsSection = ({
       }}>
 
         {/* ── Header bar ── */}
-        <div style={{
-          padding: "22px 28px",
-          borderBottom: "1px solid #eef0fa",
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: "12px",
-        }}>
+        <div className="pds-header">
           <div>
-            <h3 style={{ fontSize: "20px", fontWeight: "700", color: "#1e293b", margin: "0 0 4px" }}>
+            <h3 className="pds-title" style={{ fontSize: "20px", fontWeight: "700", color: "#1e293b", margin: "0 0 4px" }}>
               Personal Details
             </h3>
             <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>
@@ -278,12 +377,13 @@ export const PersonalDetailsSection = ({
             </p>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+          <div className="pds-header-actions">
             {/* Status badge */}
             <span style={{
               display: "inline-flex", alignItems: "center", gap: "6px",
               padding: "5px 12px", borderRadius: "8px", fontSize: "12px", fontWeight: "600",
               background: ss.background, color: ss.color, border: ss.border,
+              whiteSpace: "nowrap",
             }}>
               <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: ss.dot, flexShrink: 0 }} />
               {ss.label}
@@ -298,6 +398,7 @@ export const PersonalDetailsSection = ({
                   padding: "8px 18px", borderRadius: "8px",
                   fontSize: "13px", fontWeight: "600",
                   border: "none", cursor: "pointer", transition: "background 0.2s",
+                  whiteSpace: "nowrap",
                 }}>
                   <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -307,16 +408,18 @@ export const PersonalDetailsSection = ({
                 </button>
               )
             ) : (
-              <div style={{ display: "flex", gap: "8px" }}>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                 <button className="pds-save-btn" onClick={handleSave} disabled={isSaving} style={{
                   background: isSaving ? '#86efac' : '#16a34a', color: '#fff', padding: '8px 18px',
                   borderRadius: '8px', fontSize: '13px', fontWeight: '600',
                   border: 'none', cursor: isSaving ? 'not-allowed' : 'pointer', transition: 'background 0.2s',
+                  whiteSpace: "nowrap",
                 }}>{isSaving ? 'Saving…' : 'Save'}</button>
                 <button className="pds-cancel-btn" onClick={handleCancel} style={{
                   background: "#e2e8f0", color: "#475569", padding: "8px 18px",
                   borderRadius: "8px", fontSize: "13px", fontWeight: "600",
                   border: "none", cursor: "pointer", transition: "background 0.2s",
+                  whiteSpace: "nowrap",
                 }}>Cancel</button>
               </div>
             )}
@@ -324,35 +427,25 @@ export const PersonalDetailsSection = ({
         </div>
 
         {/* ── Body ── */}
-        <div style={{ padding: "24px 28px" }}>
+        <div className="pds-body">
 
-          {/* Core 6-field grid — these fields are ALWAYS read-only, even in edit mode */}
           {isEditing && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)',
-              borderRadius: '8px', padding: '8px 14px', marginBottom: '16px',
-            }}>
-              <span style={{ fontSize: '14px' }}>🔒</span>
-              <span style={{ fontSize: '12px', color: '#4f46e5', fontWeight: '600' }}>
-                Name, Roll No, Department, Program , Faculty Advisor , Semester and Batch cannot be changed by the Student.
+            <div className="pds-lock-notice">
+              <span style={{ fontSize: "16px", flexShrink: 0 }}>🔒</span>
+              <span>
+                Name, Roll No, Department, Program, Faculty Advisor, Semester and Batch cannot be changed by the Student.
               </span>
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '18px' }}>
-
-            {/* Always read-only */}
+          {/* Core 6-field grid — always read-only */}
+          <div className="pds-grid-3">
             <DisplayField label="Student Name"  value={studentData.name} />
             <DisplayField label="Roll Number"   value={studentData.rollNo} />
             <DisplayField label="Department"    value={deptMap[studentData.department] || studentData.department} />
             <DisplayField label="Program"       value={studentData.program} />
             <DisplayField label="Batch / Year"  value={String(studentData.batch)} />
-
-            {/* Current Semester — editable */}
-           <DisplayField label="Current Semester" value={String(currentSemester || '')}
-                  onChange={v => handleChange('currentSemester', parseInt(v))}
-                  options={[1,2,3,4,5,6,7,8].map(s => ({ value: String(s), label: `Semester ${s}` }))} />
+            <DisplayField label="Current Semester" value={String(currentSemester || '')} />
           </div>
 
           {/* ── Expandable "Show All" area ── */}
@@ -366,22 +459,19 @@ export const PersonalDetailsSection = ({
 
                 <SectionDivider label="Contact & Advisor" />
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '18px' }}>
+                <div className="pds-grid-3-contact">
                   {isEditing
                     ? <EditInput label="Contact Number" value={String(editData.contactNo)} type="tel"
                         placeholder="10-digit mobile"
                         onChange={v => handleChange('contactNo', v.replace(/\D/g,'').slice(0,10))} />
                     : <DisplayField label="Contact Number" value={String(studentData.contactNo)} />}
 
-                  {/* FA/Supervisor — editable */}
-                 <DisplayField label={advisorLabel} value={editData[advisorEditField]}
-                        onChange={v => handleChange(advisorEditField, v)}
-                        options={facultyList} />
+                  <DisplayField label={advisorLabel} value={editData[advisorEditField]} />
                 </div>
 
                 <SectionDivider label="Guardian Information" />
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "18px" }}>
+                <div className="pds-grid-3">
                   {isEditing
                     ? <EditInput label="Father's Name" value={editData.fatherName} onChange={v => handleChange("fatherName", v)} />
                     : <DisplayField label="Father's Name" value={studentData.fatherName} />}
@@ -399,7 +489,7 @@ export const PersonalDetailsSection = ({
 
                 <SectionDivider label="Addresses" />
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                <div className="pds-grid-2">
                   <AddressBlock title="Permanent Address"      data={studentData.permanentAddress}
                     prefix="permanentAddress" isEditing={isEditing} editData={editData}
                     handleChange={handleChange} accentColor="#6366f1" />
@@ -442,22 +532,21 @@ export const PersonalDetailsSection = ({
 
 // ── Demo ────────────────────────────────────────────────────────────────────
 
-// const SAMPLE = {
-//   rollNo: "B230483CS", name: "PANKAJ R", batch: 2023,
-//   contactNo: 9446332079, department: "CS", program: "B.Tech",
-//   currentSemester: 6, facultyAdvisor: "Nirmal Kumar Boran", supervisor: "",
-//   permanentAddress:  { line1: "Peace Mahal, opposite to kalpaka theatre", line2: "", city: "Kozhikode", state: "Kerala", country: "India", zip: "673007" },
-//   temporaryAddress:  { line1: "Peace Mahal, opposite to kalpaka theatre", line2: "", city: "Kozhikode", state: "Kerala", country: "India", zip: "673007" },
-//   fatherName: "Ramoji", motherName: "Sumathi", guardianContact: 8714243079,
-//   verificationStatus: false, personalVerificationStatus: "rejected",
-// };
+const SAMPLE = {
+  rollNo: "B230483CS", name: "PANKAJ R", batch: 2023,
+  contactNo: 9446332079, department: "CS", program: "B.Tech",
+  currentSemester: 6, facultyAdvisor: "Nirmal Kumar Boran", supervisor: "",
+  permanentAddress:  { line1: "Peace Mahal, opposite to kalpaka theatre", line2: "", city: "Kozhikode", state: "Kerala", country: "India", zip: "673007" },
+  temporaryAddress:  { line1: "Peace Mahal, opposite to kalpaka theatre", line2: "", city: "Kozhikode", state: "Kerala", country: "India", zip: "673007" },
+  fatherName: "Ramoji", motherName: "Sumathi", guardianContact: 8714243079,
+  verificationStatus: false, personalVerificationStatus: "rejected",
+};
 
 export default function Demo() {
   const [studentData, setStudentData] = useState(SAMPLE);
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(135deg,#1e1b4b 0%,#312e81 40%,#4c1d95 100%)", padding: "40px 24px" }}>
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-        {/* Page header — mirrors AMS portal style */}
         <div style={{
           background: "rgba(255,255,255,0.07)", backdropFilter: "blur(8px)",
           borderRadius: "14px", border: "1px solid rgba(255,255,255,0.12)",

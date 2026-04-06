@@ -58,7 +58,8 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
     if (sgpa >= 7.5) return { grade: 'B', color: 'cyan', message: 'You need mostly B grades' };
     if (sgpa >= 6.5) return { grade: 'C', color: 'yellow', message: 'You need mostly C grades' };
     if (sgpa >= 5.5) return { grade: 'D', color: 'orange', message: 'You need mostly D grades' };
-    return { grade: 'E', color: 'red', message: 'Minimum passing grades required' };
+    if (sgpa >= 4.5) return { grade: 'E', color: 'red', message: 'You need mostly E grades' };
+    return { grade: 'R', color: 'rose', message: 'Minimum passing grades required' };
   };
 
   return (
@@ -168,7 +169,8 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
                       cyan: 'from-cyan-50 to-sky-50 border-cyan-300 text-cyan-800',
                       yellow: 'from-yellow-50 to-amber-50 border-yellow-300 text-yellow-800',
                       orange: 'from-orange-50 to-red-50 border-orange-300 text-orange-800',
-                      red: 'from-red-50 to-pink-50 border-red-300 text-red-800'
+                      red: 'from-red-50 to-pink-50 border-red-300 text-red-800',
+                      rose: 'from-rose-50 to-pink-50 border-rose-300 text-rose-800'
                     };
 
                     return (
@@ -245,13 +247,17 @@ export const TargetCGPACalculator = ({ currentCGPA, courses, getGradePoint }) =>
           </summary>
           <div className="mt-4 p-4 bg-gray-50 rounded-lg text-sm text-gray-700 space-y-2">
             <p className="font-mono">CGPA = Σ(Credit × Grade Point) / Σ(Credits)</p>
-            <div className="grid grid-cols-6 gap-2 mt-3">
-              <div className="text-center"><span className="font-bold">S</span> = 10</div>
-              <div className="text-center"><span className="font-bold">A</span> = 9</div>
-              <div className="text-center"><span className="font-bold">B</span> = 8</div>
-              <div className="text-center"><span className="font-bold">C</span> = 7</div>
-              <div className="text-center"><span className="font-bold">D</span> = 6</div>
-              <div className="text-center"><span className="font-bold">E</span> = 5</div>
+            <div className="flex flex-wrap gap-4 mt-3 justify-center">
+              <div><span className="font-bold">S</span> = 10</div>
+              <div><span className="font-bold">A</span> = 9</div>
+              <div><span className="font-bold">B</span> = 8</div>
+              <div><span className="font-bold">C</span> = 7</div>
+              <div><span className="font-bold">D</span> = 6</div>
+              <div><span className="font-bold">E</span> = 5</div>
+              <div><span className="font-bold">R</span> = 4</div>
+              <div><span className="font-bold">F</span> = 0</div>
+              <div><span className="font-bold">W</span> = 0</div>
+              <div><span className="font-bold">I</span> = 0</div>
             </div>
           </div>
         </details>
