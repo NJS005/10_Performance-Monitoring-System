@@ -1,9 +1,9 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '../../features/faculty/hooks/useStudents';
-import DarkModeToggle from '../../../DarkModeToggle';
 
 const Sidebar = ({ isOpen, setIsOpen, mobileOpen, setMobileOpen }) => {
+  const navigate = useNavigate();
   const { data: stats } = useDashboardStats();
   const pendingCount = stats?.pending || 0;
 
@@ -41,6 +41,12 @@ const Sidebar = ({ isOpen, setIsOpen, mobileOpen, setMobileOpen }) => {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const userName = user?.name?.toUpperCase() || "Faculty Advisor";
   const displayName = userName.toLowerCase().startsWith("dr") ? userName : `Dr. ${userName}`;
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/');
+  };
 
   const SidebarContent = ({ mobile = false }) => (
     <>
@@ -101,9 +107,18 @@ const Sidebar = ({ isOpen, setIsOpen, mobileOpen, setMobileOpen }) => {
         </div>
       </nav>
 
-      {/* Dark mode toggle + User profile */}
+      {/* Logout button + User profile */}
       <div className="p-4 border-t border-slate-600 space-y-3">
-        <DarkModeToggle className="w-full" />
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-medium transition-colors"
+          title={!(mobile || isOpen) ? 'Logout' : ''}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          {(mobile || isOpen) && <span>Logout</span>}
+        </button>
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
             FA
