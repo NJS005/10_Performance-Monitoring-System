@@ -54,6 +54,57 @@ const calculateCgpaFromCourses = (courses) => {
   return (totalPoints / totalCredits).toFixed(2);
 };
 
+const openDecisionEmail = (student, decision, remarks) => {
+  if (!student || !student.email) {
+    alert('No email address is available for this student, so an email cannot be prepared.');
+    return;
+  }
+
+  let user = {};
+  try {
+    user = JSON.parse(localStorage.getItem('user') || '{}');
+  } catch {
+    user = {};
+  }
+
+  const facultyName = user.name || 'Faculty Advisor';
+  const facultyEmail = user.email || '';
+
+  const subject = decision === 'approved'
+    ? `Academic verification approved - ${student.rollNumber || student.rollNo || ''}`
+    : `Academic verification requires changes - ${student.rollNumber || student.rollNo || ''}`;
+
+  const lines = [];
+  lines.push(`Dear ${student.name || 'Student'},`);
+  lines.push('');
+
+  if (decision === 'approved') {
+    lines.push('Your submitted academic performance details have been reviewed and approved.');
+  } else {
+    lines.push('Your submitted academic performance details have been reviewed and currently require some changes before approval.');
+  }
+
+  if (remarks && remarks.trim().length > 0) {
+    lines.push('');
+    lines.push('Remarks from your faculty advisor:');
+    lines.push(remarks.trim());
+  }
+
+  lines.push('');
+  lines.push('If you have any questions, please reply to this email.');
+  lines.push('');
+  lines.push('Regards,');
+  lines.push(facultyName);
+  if (facultyEmail) {
+    lines.push(facultyEmail);
+  }
+
+  const body = encodeURIComponent(lines.join('\n'));
+  const mailto = `mailto:${student.email}?subject=${encodeURIComponent(subject)}&body=${body}`;
+
+  window.location.href = mailto;
+};
+
 const StudentReviewPage = () => {
   const { studentId } = useParams();
   const navigate = useNavigate();
@@ -111,6 +162,7 @@ const StudentReviewPage = () => {
   const handleApprove = async () => {
     try {
       await approveStudent.mutateAsync({ studentId, remarks: approvalRemarks });
+      openDecisionEmail(student, 'approved', approvalRemarks);
       setApprovalRemarks('');
       alert('Student approved successfully!');
       navigate('/faculty/students');
@@ -123,6 +175,7 @@ const StudentReviewPage = () => {
   const handleReject = async (remarks) => {
     try {
       await rejectStudent.mutateAsync({ studentId, remarks });
+      openDecisionEmail(student, 'rejected', remarks);
       setShowRejectModal(false);
       alert('Student rejected successfully!');
       navigate('/faculty/students');
