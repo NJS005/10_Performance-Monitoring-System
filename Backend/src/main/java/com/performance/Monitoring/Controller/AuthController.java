@@ -20,6 +20,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Arrays;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -37,6 +40,9 @@ public class AuthController {
 
     @Autowired
     private RateLimiter rateLimiter;
+
+    @Value("${app.admin.emails:}")
+    private String adminEmails;
 
     private static final String CLIENT_ID = "750796996880-c4875choh43f78urk1d5gt06orqln9q1.apps.googleusercontent.com";
 
@@ -63,9 +69,18 @@ public class AuthController {
                 GoogleIdToken.Payload payload = idToken.getPayload();
                 String email = payload.getEmail();
 
-
                 String domain = payload.getHostedDomain();
 
+                boolean isAdmin = requestedRole != null && "admin".equalsIgnoreCase(requestedRole);
+                if (isAdmin) {
+                    if (adminEmails == null || adminEmails.trim().isEmpty()) {
+                        return ResponseEntity.status(403).body("Admin access is currently disabled by the system.");
+                    }
+                    List<String> allowedAdmins = Arrays.asList(adminEmails.split(","));
+                    if (!allowedAdmins.contains(email)) {
+                        return ResponseEntity.status(403).body("This email is not authorized for Admin access.");
+                    }
+                }
 
                 boolean isFaculty = requestedRole != null && requestedRole.toLowerCase().contains("faculty");
 
