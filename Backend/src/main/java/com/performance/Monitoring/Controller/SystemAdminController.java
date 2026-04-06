@@ -137,7 +137,7 @@ public class SystemAdminController {
         if (payload.getName() != null) existing.setName(payload.getName());
         if (payload.getDepartment() != null) existing.setDepartment(payload.getDepartment());
         if (payload.getBatch() != 0) existing.setBatch(payload.getBatch());
-        if (payload.getContactNo() != 0) existing.setContactNo(payload.getContactNo());
+        if (payload.getContactNo() != null && payload.getContactNo() != 0) existing.setContactNo(payload.getContactNo());
 
         String faName = payload.getFacultyAdvisorTemp();
         if (faName != null) {

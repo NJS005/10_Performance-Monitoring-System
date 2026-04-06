@@ -34,6 +34,12 @@ public class FacultyController {
     @Autowired
     private StudentRepo studentRepo;
 
+    @Autowired
+    private com.performance.Monitoring.Service.EmailService emailService;
+
+    @Autowired
+    private com.performance.Monitoring.Repo.UserRepo userRepo;
+
     @PreAuthorize("hasRole('ADMIN') or (hasRole('FACULTY_ADVISOR') and principal.email == #email)")
     @GetMapping("/students")
     public ResponseEntity<?> getAssignedStudents(
@@ -114,6 +120,26 @@ public class FacultyController {
         student.setVerificationStatus("approved");
         studentRepo.save(student);
 
+        // Send Email
+        String feedback = body != null ? body.get("feedback") : null;
+        if (student.getName() != null) {
+            com.performance.Monitoring.Modal.User u = userRepo.findByName(student.getName()).orElse(null);
+            if (u != null && u.getEmail() != null) {
+                String subject = "Your profile has been approved";
+                String text = "Dear " + student.getName() + ",\n\nYour profile has been approved by your faculty advisor.";
+                if (feedback != null && !feedback.isBlank()) {
+                    text += "\n\nFeedback from faculty: " + feedback;
+                }
+                try {
+                    System.out.println("Attempting to send approval email to: " + u.getEmail());
+                    emailService.sendEmail(u.getEmail(), subject, text);
+                    System.out.println("Successfully sent approval email to: " + u.getEmail());
+                } catch (Exception e) {
+                    System.err.println("Failed to send email: " + e.getMessage());
+                }
+            }
+        }
+
         return ResponseEntity.ok(Map.of("success", true, "message", "Student approved successfully"));
     }
 
@@ -129,6 +155,27 @@ public class FacultyController {
         student.setVerificationStatus("rejected");
         // Could also capture remarks if we added a field on the Student entity, but we will leave it as is for now mimicking approve.
         studentRepo.save(student);
+
+        // Send Email
+        String feedback = body != null ? body.get("feedback") : null;
+        if (student.getName() != null) {
+            com.performance.Monitoring.Modal.User u = userRepo.findByName(student.getName()).orElse(null);
+            if (u != null && u.getEmail() != null) {
+                String subject = "Your profile has been rejected";
+                String text = "Dear " + student.getName() + ",\n\nYour profile verification has been rejected by your faculty advisor.";
+                if (feedback != null && !feedback.isBlank()) {
+                    text += "\n\nFeedback from faculty: " + feedback;
+                }
+                text += "\n\nPlease correct the issues and submit again.";
+                try {
+                    System.out.println("Attempting to send rejection email to: " + u.getEmail());
+                    emailService.sendEmail(u.getEmail(), subject, text);
+                    System.out.println("Successfully sent rejection email to: " + u.getEmail());
+                } catch (Exception e) {
+                    System.err.println("Failed to send email: " + e.getMessage());
+                }
+            }
+        }
 
         return ResponseEntity.ok(Map.of("success", true, "message", "Student rejected successfully"));
     }

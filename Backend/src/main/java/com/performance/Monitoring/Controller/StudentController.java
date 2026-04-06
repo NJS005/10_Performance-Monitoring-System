@@ -81,9 +81,9 @@ public class StudentController {
         Student student = studentService.getStudentByRollNumber(rollNo);
         if (student == null) return ResponseEntity.notFound().build();
 
-        if (patch.containsKey("contactNo"))
+        if (patch.containsKey("contactNo") && patch.get("contactNo") != null)
             student.setContactNo(((Number) patch.get("contactNo")).longValue());
-        if (patch.containsKey("guardianContact"))
+        if (patch.containsKey("guardianContact") && patch.get("guardianContact") != null)
             student.setGuardianContact(((Number) patch.get("guardianContact")).longValue());
         if (patch.containsKey("fatherName"))
             student.setFatherName((String) patch.get("fatherName"));

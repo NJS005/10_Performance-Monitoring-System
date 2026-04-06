@@ -21,7 +21,7 @@ public class Student {
         // @Column(nullable = false)
         private int batch;
         // @Column(nullable = false)
-        private long contactNo;
+        private Long contactNo;
         // @Column(nullable = false)
         private String department;
         // @Column(nullable = false)
@@ -66,7 +66,7 @@ public class Student {
         
                 private String fatherName;
         private String motherName;
-        private long guardianContact;
+        private Long guardianContact;
         private String verificationStatus;
         private String date;
 
@@ -102,17 +102,17 @@ public class Student {
                 this.batch = batch;
         }
 
-        public long getContactNo() {
+        public Long getContactNo() {
                 return contactNo;
         }
 
-        public void setContactNo(long contactNo) {
+        public void setContactNo(Long contactNo) {
                 this.contactNo = contactNo;
         }
 
-        public Student(String rollNo, String name, int batch, long contactNo, String department, String program,
+        public Student(String rollNo, String name, int batch, Long contactNo, String department, String program,
                         String facultyAdvisor, String supervisor, Address permanentAddress, Address temporaryAddress,
-                        String fatherName, String motherName, long guardianContact, String verificationStatus,
+                        String fatherName, String motherName, Long guardianContact, String verificationStatus,
                          String date  ) {
                 this.rollNo = rollNo;
                 this.name = name;
@@ -238,11 +238,11 @@ public class Student {
                 this.motherName = motherName;
         }
 
-        public long getGuardianContact() {
+        public Long getGuardianContact() {
                 return guardianContact;
         }
 
-        public void setGuardianContact(long guardianContact) {
+        public void setGuardianContact(Long guardianContact) {
                 this.guardianContact = guardianContact;
         }
 
